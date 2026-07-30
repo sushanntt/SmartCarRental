@@ -1,0 +1,143 @@
+@model HajurKoCarRental.Models.RentOffer
+
+@{
+    ViewData["Title"] = "Offer Rent Details";
+}
+
+<h1>Offer Rent Details</h1>
+
+<div class="card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <dl class="row">
+                    <dt class="col-sm-4">Car Name</dt>
+                    <dd class="col-sm-8">@Model.Offer?.CarName</dd>
+
+                    <dt class="col-sm-4">Offer Title</dt>
+                    <dd class="col-sm-8">@Model.Offer?.OfferTitle</dd>
+
+                    <dt class="col-sm-4">User</dt>
+                    <dd class="col-sm-8">@Model.User?.Email</dd>
+
+                    <dt class="col-sm-4">Phone</dt>
+                    <dd class="col-sm-8">@Model.User?.PhoneNumber</dd>
+
+                    <dt class="col-sm-4">Payment Method</dt>
+                    <dd class="col-sm-8">@Model.PaymentMethod</dd>
+
+                    <dt class="col-sm-4">Amount</dt>
+                    <dd class="col-sm-8">Rs. @Model.Amount</dd>
+
+                    <dt class="col-sm-4">Advance Payment</dt>
+                    <dd class="col-sm-8">Rs. @Model.AdvancePaid</dd>
+
+                    <dt class="col-sm-4">Pay at Return</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.RemainingAmount > 0)
+                        {
+                            <span style="color:#e74a3b;font-weight:600;">Rs. @Model.RemainingAmount</span>
+                        }
+                        else
+                        {
+                            <span style="color:#1cc88a;">Paid</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Duration</dt>
+                    <dd class="col-sm-8">@Model.Duration day(s)</dd>
+
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Verified == true)
+                        {
+                            <span class="badge" style="background-color:green;color:white;">Approved</span>
+                        }
+                        else if (Model.Verified == null)
+                        {
+                            <span class="badge" style="background-color:#6c757d;color:white;">Rejected</span>
+                        }
+                        else
+                        {
+                            <span class="badge" style="background-color:red;color:white;">Pending</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Request Date</dt>
+                    <dd class="col-sm-8">@Model.RequestDate.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                    <dt class="col-sm-4">Rental Date</dt>
+                    <dd class="col-sm-8">@Model.RentalDate.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                    <dt class="col-sm-4">Pickup Branch</dt>
+                    <dd class="col-sm-8">@(Model.PickupBranch?.Name ?? "-")</dd>
+
+                    @if (Model.PickupLat.HasValue && Model.PickupLng.HasValue)
+                    {
+                        <dt class="col-sm-4">Pickup Location</dt>
+                        <dd class="col-sm-8">@Model.PickupLat.Value.ToString("F6"), @Model.PickupLng.Value.ToString("F6")</dd>
+                    }
+                </dl>
+            </div>
+            <div class="col-md-6">
+                <h5>Pickup Location & Branch</h5>
+                <div id="detailMap" style="height: 350px; border-radius: 8px;"></div>
+                @if (Model.PickupLat.HasValue && Model.PickupLng.HasValue)
+                {
+                    <small class="text-muted">User's pickup location shown in orange, branch in blue.</small>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="mt-3">
+    <a asp-action="OfferRequest" class="btn btn-secondary">Back to List</a>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var branchLat = @(Model.PickupBranch?.Latitude?.ToString("F6") ?? "null");
+        var branchLng = @(Model.PickupBranch?.Longitude?.ToString("F6") ?? "null");
+        var branchName = '@Html.Raw(Model.PickupBranch?.Name ?? "No branch assigned")';
+        var userLat = @(Model.PickupLat?.ToString("F6") ?? "null");
+        var userLng = @(Model.PickupLng?.ToString("F6") ?? "null");
+
+        var map = L.map('detailMap');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        var markers = [];
+
+        if (branchLat && branchLng) {
+            var m = L.circleMarker([branchLat, branchLng], {
+                radius: 10,
+                fillColor: '#0A4D3B',
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 0.9
+            }).addTo(map).bindTooltip(branchName + ' (branch)');
+            markers.push([branchLat, branchLng]);
+        }
+
+        if (userLat && userLng) {
+            var m = L.circleMarker([userLat, userLng], {
+                radius: 10,
+                fillColor: '#ff6b35',
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 0.9
+            }).addTo(map).bindTooltip('Your pickup location');
+            markers.push([userLat, userLng]);
+        }
+
+        if (markers.length > 0) {
+            map.fitBounds(markers, { padding: [50, 50] });
+        } else {
+            map.setView([27.7172, 85.3240], 12);
+        }
+    </script>
+}

@@ -1,0 +1,237 @@
+@model List<HajurKoCarRental.Services.CustomerChurnRecord>
+@{
+    ViewData["Title"] = "Churn Prediction Report";
+}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" />
+
+<h1>
+    Customer Churn Prediction
+    <i class="fa fa-info-circle text-primary" style="cursor:pointer; font-size:1.2rem;" onclick="toggleFormula()" title="How churn score is calculated"></i>
+</h1>
+
+<div id="formulaCard" class="card mt-2 mb-3" style="display:none;">
+    <div class="card-body py-2">
+        <code>
+            ChurnRisk = 0.40 × (1 − RecencyScore) + 0.35 × (1 − FrequencyScore) + 0.25 × (1 − MonetaryScore)
+        </code>
+        <ul class="mb-0 mt-1 small">
+            <li><strong>Recency Score</strong> = 1 − (DaysSinceLastRental ÷ 365) — higher when customer rented recently</li>
+            <li><strong>Frequency Score</strong> = Min(RentalsIn12Months, 10) ÷ 10 — higher for frequent renters</li>
+            <li><strong>Monetary Score</strong> = Min(TotalSpent, 50,000) ÷ 50,000 — higher for big spenders</li>
+            <li><strong>Risk Levels:</strong> High (≥0.70), Medium (≥0.40), Low (&lt;0.40)</li>
+        </ul>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h5 class="card-title">High Risk</h5>
+                <h2>@ViewBag.HighCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white" style="background-color:#b86b1d !important;">
+            <div class="card-body text-center">
+                <h5 class="card-title">Medium Risk</h5>
+                <h2>@ViewBag.MediumCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5 class="card-title">Low Risk</h5>
+                <h2>@ViewBag.LowCount</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Customers</h5>
+                <h2>@ViewBag.TotalCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-3 d-flex align-items-center gap-2 flex-wrap">
+    <button class="btn btn-sm btn-dark" onclick="filterRisk('All')">All</button>
+    <button class="btn btn-sm btn-outline-danger" onclick="filterRisk('High')">High Risk</button>
+    <button class="btn btn-sm btn-outline-secondary" onclick="filterRisk('Medium')">Medium Risk</button>
+    <button class="btn btn-sm btn-outline-success" onclick="filterRisk('Low')">Low Risk</button>
+    <div class="ms-auto">
+        <a asp-action="ExportExcel" class="btn btn-success btn-sm"><i class="fa fa-file-excel"></i> Export Excel</a>
+        <a asp-action="ExportPdf" class="btn btn-danger btn-sm"><i class="fa fa-file-pdf"></i> Export PDF</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table id="churnTable" class="table table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Risk Level</th>
+                <th>Churn Score</th>
+                <th>Days Since Last Rental</th>
+                <th>Rentals (12mo)</th>
+                <th>Total Spent</th>
+                <th>Recency</th>
+                <th>Frequency</th>
+                <th>Monetary</th>
+                <th>Flags</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr id="noCustomersRow" style="display:none;"><td colspan="12" class="text-center text-muted">No customers available.</td></tr>
+            @foreach (var item in Model)
+            {
+                var badgeClass = item.RiskLevel == "High" ? "bg-danger" :
+                                item.RiskLevel == "Medium" ? "bg-dark" : "bg-success";
+                var badgeStyle = item.RiskLevel == "Medium" ? "background-color:#b86b1d;color:white;" : "";
+                <tr data-risk="@item.RiskLevel">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            @if (!string.IsNullOrEmpty(item.ProfilePhotoUrl))
+                            {
+                                <img src="@Url.Content("~/images/" + item.ProfilePhotoUrl)" class="rounded-circle me-2" width="32" height="32" />
+                            }
+                            else
+                            {
+                                <i class="fa fa-user-circle fa-2x me-2 text-secondary"></i>
+                            }
+                            <span>@item.CustomerName</span>
+                        </div>
+                    </td>
+                    <td>@item.Email</td>
+                    <td><span class="badge @badgeClass" style="@badgeStyle">@item.RiskLevel</span></td>
+                    <td>@(item.ChurnRiskScore.ToString("P1"))</td>
+                    <td>@item.DaysSinceLastRental</td>
+                    <td>@item.RentalCount</td>
+                    <td>@item.TotalSpent.ToString("N0")</td>
+                    <td>@item.RecencyScore.ToString("0.00")</td>
+                    <td>@item.FrequencyScore.ToString("0.00")</td>
+                    <td>@item.MonetaryScore.ToString("0.00")</td>
+                    <td>
+                        @if (item.HasUnpaidDamage)
+                        {
+                            <span class="badge bg-danger" title="Unpaid damage claim">Damage</span>
+                        }
+                        @if (!item.IsProfileComplete)
+                        {
+                            <span class="badge bg-secondary" title="Profile incomplete">Profile</span>
+                        }
+                        @if (item.IsRegularCustomer)
+                        {
+                            <span class="badge bg-info text-dark" title="Regular customer">Regular</span>
+                        }
+                        @if (!item.HasUnpaidDamage && item.IsProfileComplete && !item.IsRegularCustomer)
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="openOfferModal('@item.UserId', '@item.CustomerName', '@item.Email')">Send Offer</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="offerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form class="modal-content" method="post" asp-action="SendRetentionOffer">
+            <input type="hidden" name="userId" id="offerUserId" />
+            <input type="hidden" name="customerName" id="offerCustomerName" />
+            <input type="hidden" name="customerEmail" id="offerCustomerEmail" />
+            <div class="modal-header">
+                <h5 class="modal-title">Send Retention Offer</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="offerCustomerDisplay" class="mb-2"></p>
+                <div class="mb-3">
+                    <label class="form-label">Offer Type</label>
+                    <select name="offerType" class="form-select" id="offerTypeSelect" onchange="toggleCustomMessage()">
+                        <option value="Discount10">10% Discount</option>
+                        <option value="FreeUpgrade">15% Discount</option>
+                        <option value="Discount20">20% Discount</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                </div>
+                <div class="mb-3" id="customMessageGroup" style="display:none;">
+                    <label class="form-label">Discount Percentage (10–100)</label>
+                    <input type="number" name="customPercentage" class="form-control" min="10" max="100" step="1" value="15" />
+                    <div class="form-text mt-1">Enter the discount percentage you want to offer.</div>
+                    <label class="form-label mt-2">Custom Message (optional)</label>
+                    <textarea name="customMessage" class="form-control" rows="3" placeholder="Add a personal message..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Send Offer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleFormula() {
+        var card = document.getElementById('formulaCard');
+        card.style.display = card.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function filterRisk(level) {
+        var rows = document.querySelectorAll('#churnTable tbody tr');
+        var btns = document.querySelectorAll('.mb-3 .btn');
+        btns.forEach(function(b) {
+            b.removeAttribute('style');
+            var text = b.textContent.trim();
+            if (text === 'All') b.className = 'btn btn-sm btn-outline-dark';
+            else if (text === 'High Risk') b.className = 'btn btn-sm btn-outline-danger';
+            else if (text === 'Medium Risk') b.className = 'btn btn-sm btn-outline-secondary';
+            else if (text === 'Low Risk') b.className = 'btn btn-sm btn-outline-success';
+        });
+        var activeBtn = Array.from(btns).find(function(b) {
+            return b.textContent.trim() === (level === 'All' ? 'All' : level + ' Risk');
+        });
+        if (activeBtn) {
+            if (level === 'All') activeBtn.className = 'btn btn-sm btn-dark';
+            else if (level === 'High') { activeBtn.className = 'btn btn-sm'; activeBtn.style.backgroundColor = '#dc3545'; activeBtn.style.borderColor = '#dc3545'; activeBtn.style.color = 'white'; }
+            else if (level === 'Medium') { activeBtn.className = 'btn btn-sm'; activeBtn.style.backgroundColor = '#b86b1d'; activeBtn.style.borderColor = '#b86b1d'; activeBtn.style.color = 'white'; }
+            else if (level === 'Low') { activeBtn.className = 'btn btn-sm'; activeBtn.style.backgroundColor = '#198754'; activeBtn.style.borderColor = '#198754'; activeBtn.style.color = 'white'; }
+        }
+        var anyVisible = false;
+        rows.forEach(function(row) {
+            if (row.id === 'noCustomersRow') return;
+            var match = level === 'All' || row.getAttribute('data-risk') === level;
+            row.style.display = match ? '' : 'none';
+            if (match) anyVisible = true;
+        });
+        document.getElementById('noCustomersRow').style.display = anyVisible ? 'none' : '';
+    }
+
+    function openOfferModal(userId, customerName, customerEmail) {
+        document.getElementById('offerUserId').value = userId;
+        document.getElementById('offerCustomerName').value = customerName;
+        document.getElementById('offerCustomerEmail').value = customerEmail;
+        document.getElementById('offerCustomerDisplay').innerHTML = '<strong>Customer:</strong> ' + customerName + ' (' + customerEmail + ')';
+        document.getElementById('offerTypeSelect').value = 'Discount10';
+        document.getElementById('customMessageGroup').style.display = 'none';
+        var pctInput = document.querySelector('input[name="customPercentage"]');
+        if (pctInput) pctInput.value = '15';
+        var modal = new bootstrap.Modal(document.getElementById('offerModal'));
+        modal.show();
+    }
+
+    function toggleCustomMessage() {
+        var val = document.getElementById('offerTypeSelect').value;
+        document.getElementById('customMessageGroup').style.display = val === 'Custom' ? '' : 'none';
+    }
+</script>

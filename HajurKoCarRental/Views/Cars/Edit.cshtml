@@ -1,0 +1,184 @@
+@model HajurKoCarRental.Models.Car
+
+@{
+    ViewData["Title"] = "Edit";
+    <style>
+        .wrapper {
+            max-width: 925px;
+            width: 100%;
+            background: #eff5f5;
+            margin: 20px auto;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.125);
+            padding: 30px;
+        }
+
+        .card-title {
+            text-align: center;
+        }
+
+        .form-group {
+            margin-left: 30px;
+            margin-right: 30px;
+            margin-top: 10px;
+        }
+    </style>
+}
+
+<section class="content">
+    <div class="wrapper">
+        <div class="inputfield">
+            <div class="col-md-12">
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">Edit Car</h3>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <input type="hidden" asp-for="Id" />
+                                <div class="form-group">
+                                    <label asp-for="ModelName" class="control-label"></label>
+                                    <input asp-for="ModelName" class="form-control" />
+                                    <span asp-validation-for="ModelName" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="CarNumber" class="control-label"></label>
+                                    <input asp-for="CarNumber" class="form-control" />
+                                    <span asp-validation-for="CarNumber" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="BrandId" class="control-label"></label>
+                                    <select asp-for="BrandId" class="form-control" asp-items="ViewBag.Brands"></select>
+                                    <span asp-validation-for="BrandId" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="ModelYear" class="control-label"></label>
+                                    <input asp-for="ModelYear" class="form-control" />
+                                    <span asp-validation-for="ModelYear" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="TotalSeats" class="control-label"></label>
+                                    <input asp-for="TotalSeats" class="form-control" />
+                                    <span asp-validation-for="TotalSeats" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="EngineType" class="control-label"></label>
+                                    <input asp-for="EngineType" class="form-control" />
+                                    <span asp-validation-for="EngineType" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="Price" class="control-label"></label>
+                                    <input asp-for="Price" class="form-control" />
+                                    <span asp-validation-for="Price" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="CarDescription" class="control-label"></label>
+                                    <textarea asp-for="CarDescription" class="form-control" rows="5"></textarea>
+                                    <span asp-validation-for="CarDescription" class="text-danger"></span>
+                                </div>
+                                @*<div class="form-group">
+                                    <label asp-for="PhotoUrl" class="control-label"></label>
+                                    <input asp-for="PhotoUrl" class="form-control" />
+                                    <span asp-validation-for="PhotoUrl" class="text-danger"></span>
+                                </div>*@
+
+                                <div class="col-md-12 btn-group pb-2">
+                                    <div class="form-group col-4 p-0">
+                                        <label asp-for="Photo" class="control-label"></label>
+                                        <img id="PreviewPhoto" src="~/images/@Model.PhotoUrl" alt="Logo Image"
+                                                          width="125" height="125" />
+                                        
+                                    </div>
+                                    <div class="col-1 p-0">
+                                    </div>
+                                    <div class="form-group col-6 p-0" style="margin-left:-10rem;">
+                                        <div class="input-group custom-file-button mt-5 pt-5">
+                                            <input asp-for="Photo" class="form-control custom-file-input" id="customFile">
+                                            <label class="input-group-text" for="customFile">Browse</label>
+                                        </div>
+                                        <span asp-validation-for="PhotoUrl" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Available at Branches</label>
+                                    <div class="row" style="margin-top:8px;">
+                                        @if (ViewBag.Branches != null)
+                                        {
+                                            var branches = (List<HajurKoCarRental.Models.Branch>)ViewBag.Branches;
+                                            var carBranches = Model.CarBranches?.ToDictionary(cb => cb.BranchId, cb => cb.AvailableCount) ?? new Dictionary<Guid, int>();
+                                            for (int i = 0; i < branches.Count; i++)
+                                            {
+                                                var isChecked = carBranches.ContainsKey(branches[i].Id);
+                                                var count = isChecked ? carBranches[branches[i].Id] : 0;
+                                                <div class="col-md-6 mb-2">
+                                                    <div class="input-group">
+                                                        <div class="input-group-prepend">
+                                                            <div class="input-group-text">
+                                                                <input type="checkbox" name="branchIds" value="@branches[i].Id" id="branch_@branches[i].Id" @(isChecked ? "checked" : "") />
+                                                            </div>
+                                                        </div>
+                                                        <label class="form-control" for="branch_@branches[i].Id" style="margin-bottom:0;">@branches[i].Name</label>
+                                                        <input type="number" name="branchCounts" class="form-control" style="max-width:80px;" value="@count" min="0" placeholder="Count" />
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="col-12 text-muted">No branches created yet. <a asp-controller="Branches" asp-action="Create">Add a branch first</a>.</div>
+                                        }
+                                    </div>
+                                    <small class="form-text text-muted">Select branches where this car is available and specify the count at each branch.</small>
+                                </div>
+
+                                <div class="form-group form-check">
+                                    <label class="form-check-label">
+                                        <input class="form-check-input" asp-for="Available" /> @Html.DisplayNameFor(model => model.Available)
+                                    </label>
+                                </div><br/>
+                                <div class="card-footer">
+                                    <div class="form-group">
+                                        <input type="submit" value="Save" class="btn btn-primary" style="margin-right:2rem;" />
+                                        <a asp-action="Index" class="btn btn-danger">Cancel</a>
+                                    </div>
+                                    <div class="form-group pt-0 mt-0">
+                                        <div ID="HiddenDiv" style="visibility: hidden;">
+                                            <input asp-for="PhotoUrl" id="PhotoUrl" value="" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div>
+    
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script type="text/javascript">
+        $(".custom-file-input").on("change", function () {
+
+            var fileName = $(this).val().split("\\").pop();
+
+            document.getElementById('PreviewPhoto').src = window.URL.createObjectURL(this.files[0]);
+
+            document.getElementById('PhotoUrl').value = fileName;
+
+        });
+    </script>
+}

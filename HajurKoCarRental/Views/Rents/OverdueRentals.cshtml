@@ -1,0 +1,152 @@
+@model IEnumerable<HajurKoCarRental.Models.Rent>
+
+@{
+    ViewData["Title"] = "Overdue Rentals";
+    var now = DateTime.Now;
+    <style>
+    .badge-overdue {
+        display: inline-block;
+        padding: 0.25em 0.5em;
+        font-size: 0.9em;
+        font-weight: bold;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        background-color: #dc3545;
+        color: white;
+    }
+    </style>
+}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Overdue Rentals</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Car Model</th>
+                        <th>Car Number</th>
+                        <th>Car Photo</th>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Amount</th>
+                        <th>Expected Return</th>
+                        <th>Overdue Duration</th>
+                        <th>Operations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <i class="fa fa-check-circle fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No overdue rentals.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var expectedReturn = item.RentalDate.AddDays(item.Duration).AddHours(item.Hours);
+                            var overdue = now - expectedReturn;
+                            var overdueDisplay = "";
+                            if (overdue.TotalDays >= 1)
+                                overdueDisplay = $"{(int)overdue.TotalDays}d {overdue.Hours}h {overdue.Minutes}m";
+                            else if (overdue.TotalHours >= 1)
+                                overdueDisplay = $"{(int)overdue.TotalHours}h {overdue.Minutes}m";
+                            else
+                                overdueDisplay = $"{overdue.Minutes}m";
+                            var userName = (item.User.Firstname ?? "") + " " + (item.User.Lastname ?? "");
+                            <tr>
+                                <td>@item.Car.ModelName</td>
+                                <td>@item.Car.CarNumber</td>
+                                <td>
+                                    <img src="@Url.Content("~/images/" + item.Car.PhotoUrl)" alt="Image" width="100" height="100" />
+                                </td>
+                                <td>@userName</td>
+                                <td>@item.User.Email</td>
+                                <td>@item.User.PhoneNumber</td>
+                                <td>Rs. @item.Amount</td>
+                                <td><span class="badge-overdue">@expectedReturn.ToString("MMM dd, yyyy h:mm tt")</span></td>
+                                <td>@overdueDisplay</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="openMessageModal('@item.User.Email', '@userName', '@item.Car.ModelName', '@expectedReturn.ToString("MMM dd, yyyy h:mm tt")')">Message</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" role="dialog" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Send Message to Customer</h5>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>To:</label>
+                    <input type="email" id="msgEmail" class="form-control" readonly />
+                </div>
+                <div class="form-group">
+                    <label>Subject:</label>
+                    <input type="text" id="msgSubject" class="form-control" value="Overdue Rental Notice" />
+                </div>
+                <div class="form-group">
+                    <label>Message:</label>
+                    <textarea id="msgBody" class="form-control" rows="6"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="$('#messageModal').modal('hide')">Close</button>
+                <button type="button" class="btn btn-primary" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var currentEmail = "";
+
+    function openMessageModal(email, userName, carModel, expectedReturn) {
+        currentEmail = email;
+        document.getElementById("msgEmail").value = email;
+        document.getElementById("msgBody").value = "Dear " + userName + ",\n\nThis is a reminder that your rental for " + carModel + " was due on " + expectedReturn + ". Please return the car as soon as possible to avoid additional late fees.\n\nThank you.";
+        $('#messageModal').modal('show');
+    }
+
+    function sendMessage() {
+        $('#messageModal').modal('hide');
+        var email = document.getElementById("msgEmail").value;
+        var subject = document.getElementById("msgSubject").value;
+        var message = document.getElementById("msgBody").value;
+        $.ajax({
+            type: "POST",
+            url: "@Url.Action("SendOverdueEmail", "Rents")",
+            data: { email: email, subject: subject, message: message },
+            success: function (response) {
+                if (response.success) {
+                    alertify.success("Email sent successfully.");
+                } else {
+                    alertify.error("Failed to send email: " + response.error);
+                }
+            },
+            error: function () {
+                alertify.error("An error occurred while sending the email.");
+            }
+        });
+    }
+</script>

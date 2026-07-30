@@ -1,0 +1,1141 @@
+@using static HajurKoCarRental.Controllers.HomeController
+@model CarViewModel
+@using Microsoft.AspNetCore.Identity
+@using HajurKoCarRental.Areas.Identity.Data
+@inject SignInManager<HajurKoCarRentalUser> SignInManager
+
+@{
+    ViewData["Title"] = "Home Page";
+    var countCustomer = Model.CustomerCount;
+    var countAvailableOffers = Model.ActiveOffersCount;
+    var carsByBrand = Model.Car != null ? Model.Car
+       .Where(c => c.CarBrand != null)
+       .GroupBy(c => c.CarBrand.BrandName)
+       .Select(g => new { BrandName = g.Key, CarCount = g.Count() })
+       .ToList().Cast<dynamic>().ToList() : new List<dynamic>();
+    var festivalMultiplier = Model.FestivalMultiplier;
+    var hasFestival = festivalMultiplier > 1.0m;
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet' />
+<style>
+    .hero-section {
+        position: relative;
+        min-height: 440px;
+        padding: 60px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0A4D3B 0%, #2D8A6E 60%, #6EC4A8 100%);
+        overflow: hidden;
+    }
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 50%, rgba(255,255,255,0.08) 0%, transparent 50%);
+        animation: heroFloat 20s ease-in-out infinite;
+    }
+    @@keyframes heroFloat {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(2deg); }
+        66% { transform: translate(-20px, 20px) rotate(-1deg); }
+    }
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 40px 20px;
+    }
+    .hero-badge {
+        display: inline-block;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        color: #fff;
+        padding: 8px 24px;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .hero-title {
+        font-size: 4.2rem;
+        font-weight: 800;
+        color: #fff;
+        margin: 0 0 16px;
+        letter-spacing: -1px;
+        line-height: 1.15;
+        text-shadow: 0 4px 30px rgba(0,0,0,0.2);
+    }
+    .hero-title span {
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: rgba(255,255,255,0.85);
+        max-width: 580px;
+        margin: 0 auto 36px;
+        line-height: 1.7;
+    }
+    .hero-actions {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .hero-actions .btn-hero-primary {
+        background: #fff;
+        color: #0A4D3B;
+        padding: 14px 40px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        border: none;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    .hero-actions .btn-hero-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        color: #0A4D3B;
+    }
+    .hero-actions .btn-hero-secondary {
+        background: transparent;
+        color: #fff;
+        padding: 14px 40px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1rem;
+        border: 2px solid rgba(255,255,255,0.4);
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    .hero-actions .btn-hero-secondary:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: #fff;
+        color: #fff;
+    }
+    .hero-stats {
+        display: flex;
+        gap: 48px;
+        justify-content: center;
+        margin-top: 48px;
+        flex-wrap: wrap;
+    }
+    .hero-stat-item {
+        text-align: center;
+    }
+    .hero-stat-item .stat-num {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+    .hero-stat-item .stat-lbl {
+        font-size: 0.85rem;
+        color: rgba(255,255,255,0.7);
+        margin-top: 4px;
+    }
+    .hero-stat-item .stat-num span { color: #ffd700; }
+
+    .car-slider-section {
+        background: #fff;
+        padding: 60px 0 40px;
+    }
+    .car-slider-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+    .car-slide-track {
+        display: flex;
+        transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .car-slide-item {
+        min-width: 100%;
+        position: relative;
+    }
+    .car-slide-item img {
+        width: 100%;
+        height: 420px;
+        object-fit: cover;
+    }
+    .car-slide-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.7));
+        padding: 40px;
+        color: #fff;
+    }
+    .car-slide-overlay h3 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .car-slide-overlay p { margin: 4px 0 0; opacity: 0.85; font-size: 0.95rem; }
+    .slider-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 5;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.9);
+        border: none;
+        font-size: 20px;
+        color: #0A4D3B;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .slider-btn:hover { background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.15); transform: translateY(-50%) scale(1.1); }
+    .slider-prev { left: 16px; }
+    .slider-next { right: 16px; }
+    .slider-dots {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 16px;
+    }
+    .slider-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ccc;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .slider-dot.active { background: #0A4D3B; width: 28px; border-radius: 5px; }
+
+    .search-section {
+        background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
+        padding: 40px 0;
+    }
+    .search-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    }
+    .search-card .input-group-custom {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .search-card .input-group-custom select {
+        flex: 1;
+        min-width: 160px;
+        height: 52px;
+        border: 2px solid #e8ecf4;
+        border-radius: 12px;
+        padding: 0 16px;
+        font-size: 0.95rem;
+        background: #fafbff;
+        transition: border-color 0.3s ease;
+        cursor: pointer;
+    }
+    .search-card .input-group-custom select:focus { border-color: #0A4D3B; outline: none; }
+    .search-card .input-group-custom .search-box {
+        flex: 2;
+        min-width: 200px;
+        position: relative;
+    }
+    .search-card .input-group-custom .search-box input {
+        width: 100%;
+        height: 52px;
+        border: 2px solid #e8ecf4;
+        border-radius: 12px;
+        padding: 0 52px 0 20px;
+        font-size: 0.95rem;
+        background: #fafbff;
+        transition: border-color 0.3s ease;
+    }
+    .search-card .input-group-custom .search-box input:focus { border-color: #0A4D3B; outline: none; }
+    .search-card .input-group-custom .search-box button {
+        position: absolute;
+        right: 4px;
+        top: 4px;
+        bottom: 4px;
+        width: 44px;
+        border-radius: 10px;
+        border: none;
+        background: #0A4D3B;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .search-card .input-group-custom .search-box button:hover { background: #063627; }
+
+    .cars-section {
+        padding: 60px 0;
+        background: #f8faff;
+    }
+    .section-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .section-header .section-tag {
+        display: inline-block;
+        background: #E8F5E9;
+        color: #0A4D3B;
+        padding: 6px 20px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+    .section-header h2 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #0A4D3B;
+        margin: 0 0 8px;
+    }
+    .section-header p {
+        color: #6b7a8f;
+        font-size: 1.05rem;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    .car-card-modern {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .car-card-modern:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 16px 40px rgba(64,112,244,0.12);
+    }
+    .car-card-modern .card-img-wrap {
+        position: relative;
+        overflow: hidden;
+    }
+    .car-card-modern .card-img-wrap img.car-img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+    .car-card-modern:hover .card-img-wrap img.car-img {
+        transform: scale(1.08);
+    }
+    .car-card-modern .card-img-wrap .brand-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #fff;
+        padding: 4px;
+        object-fit: contain;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .car-card-modern .card-img-wrap .avail-tag {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(135deg, #1cc88a, #13855c);
+        color: #fff;
+        padding: 4px 14px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(28,200,138,0.3);
+    }
+    .car-card-modern .card-img-wrap .festival-tag {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        background: linear-gradient(135deg, #ff6b35, #f7931e);
+        color: #fff;
+        padding: 4px 14px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+    }
+    .car-card-modern .card-body {
+        padding: 20px;
+    }
+    .car-card-modern .card-body .car-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0A4D3B;
+        margin: 0 0 4px;
+    }
+    .car-card-modern .card-body .car-name small {
+        font-weight: 400;
+        color: #6b7a8f;
+        font-size: 0.85rem;
+    }
+    .car-card-modern .card-body .car-specs {
+        display: flex;
+        gap: 16px;
+        margin: 10px 0 14px;
+        font-size: 0.8rem;
+        color: #6b7a8f;
+    }
+    .car-card-modern .card-body .car-specs span i { margin-right: 4px; color: #0A4D3B; }
+    .car-card-modern .card-body .car-pricing {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .car-card-modern .card-body .car-pricing .price {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #0A4D3B;
+    }
+    .car-card-modern .card-body .car-pricing .price small { font-size: 0.8rem; font-weight: 400; color: #6b7a8f; }
+    .car-card-modern .card-body .car-pricing .old-price {
+        text-decoration: line-through;
+        color: #aaa;
+        font-size: 0.9rem;
+    }
+    .car-card-modern .card-footer {
+        display: flex;
+        gap: 10px;
+        padding: 0 20px 20px;
+        background: transparent;
+        border: none;
+    }
+    .car-card-modern .card-footer .btn-rent {
+        flex: 1;
+        background: linear-gradient(135deg, #0A4D3B, #063627);
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .car-card-modern .card-footer .btn-rent:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(64,112,244,0.3); color: #fff; }
+    .car-card-modern .card-footer .btn-detail {
+        flex: 1;
+        background: #E8F5E9;
+        color: #0A4D3B;
+        border: 2px solid transparent;
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .car-card-modern .card-footer .btn-detail:hover { background: #e4ebff; color: #063627; }
+
+    .offer-banner-modern {
+        position: relative;
+        background: linear-gradient(135deg, #0A4D3B 0%, #2D8A6E 50%, #6EC4A8 100%);
+        padding: 80px 40px;
+        text-align: center;
+        overflow: hidden;
+    }
+    .offer-banner-modern::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        border-radius: 50%;
+        background: rgba(255,215,0,0.06);
+    }
+    .offer-banner-modern::after {
+        content: '';
+        position: absolute;
+        bottom: -150px;
+        left: -80px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.04);
+    }
+    .offer-banner-modern .offer-content { position: relative; z-index: 2; }
+    .offer-banner-modern .offer-tag {
+        display: inline-block;
+        background: rgba(255,215,0,0.2);
+        color: #ffd700;
+        padding: 6px 20px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+    .offer-banner-modern h2 {
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: #fff;
+        margin: 0 0 12px;
+    }
+    .offer-banner-modern p {
+        font-size: 1.1rem;
+        color: rgba(255,255,255,0.8);
+        max-width: 600px;
+        margin: 0 auto 28px;
+    }
+    .offer-banner-modern .btn-offer {
+        display: inline-block;
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        color: #0A4D3B;
+        padding: 14px 44px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 30px rgba(255,215,0,0.3);
+    }
+    .offer-banner-modern .btn-offer:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(255,215,0,0.4); color: #0A4D3B; }
+
+    .features-section {
+        padding: 80px 0;
+        background: #fff;
+    }
+    .feature-card {
+        text-align: center;
+        padding: 36px 24px;
+        border-radius: 20px;
+        background: #f8faff;
+        transition: all 0.4s ease;
+        height: 100%;
+    }
+    .feature-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 40px rgba(64,112,244,0.08);
+        background: #fff;
+    }
+    .feature-card .icon-wrap {
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #E8F5E9, #dce5ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        transition: all 0.4s ease;
+    }
+    .feature-card:hover .icon-wrap { background: linear-gradient(135deg, #0A4D3B, #063627); }
+    .feature-card:hover .icon-wrap i { color: #fff; }
+    .feature-card .icon-wrap i { font-size: 28px; color: #0A4D3B; transition: all 0.4s ease; }
+    .feature-card h5 { font-weight: 700; color: #0A4D3B; margin: 0 0 8px; }
+    .feature-card p { font-size: 0.9rem; color: #6b7a8f; margin: 0; line-height: 1.6; }
+
+    .steps-section {
+        background: linear-gradient(135deg, #0A4D3B 0%, #2D8A6E 100%);
+        padding: 80px 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .steps-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(64,112,244,0.1) 0%, transparent 60%),
+                    radial-gradient(circle at 80% 50%, rgba(255,215,0,0.05) 0%, transparent 60%);
+    }
+    .steps-section .steps-header { text-align: center; position: relative; z-index: 2; }
+    .steps-section .steps-header h2 { color: #fff; font-size: 2.2rem; font-weight: 800; margin: 0 0 8px; }
+    .steps-section .steps-header p { color: rgba(255,255,255,0.6); font-size: 1.05rem; }
+    .step-card {
+        text-align: center;
+        padding: 36px 24px;
+        position: relative;
+        z-index: 2;
+    }
+    .step-number {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0A4D3B, #063627);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(64,112,244,0.3);
+    }
+    .step-card .step-icon { font-size: 36px; color: #ffd700; margin-bottom: 12px; }
+    .step-card h5 { color: #fff; font-weight: 700; font-size: 1.15rem; margin: 0 0 8px; }
+    .step-card p { color: rgba(255,255,255,0.6); font-size: 0.9rem; margin: 0; line-height: 1.6; max-width: 280px; margin: 0 auto; }
+    .step-connector { display: none; }
+    @@media (min-width: 768px) {
+        .step-connector {
+            display: block;
+            position: absolute;
+            top: 48px;
+            left: 60%;
+            width: 80%;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(64,112,244,0.4), transparent);
+            z-index: 1;
+        }
+    }
+</style>
+
+@if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+{
+    <div class="overview-boxes">
+        <div class="box">
+            <div class="right-side">
+                <div class="box-topic">Customer</div>
+                <div class="number">@countCustomer</div>
+            </div>
+            <i class="bx bx-user cart"></i>
+        </div>
+                <div class="box">
+            <div class="right-side">
+                <div class="box-topic">Cars</div>
+                <div class="number">@Model.Car.Count</div>
+            </div>
+            <i class='bx bx-car cart three'></i>
+        </div>
+        <div class="box">
+            <div class="right-side">
+                <div class="box-topic">Offers</div>
+                <div class="number">@Model.Offer.Count</div>
+            </div>
+            <i class='bx bx-gift cart four'></i>
+        </div>
+    </div>
+    <div style="border: 1px solid #ccc; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); border-radius: 10px; width: 1000px;margin: auto;">
+        <canvas id="myChart"></canvas>
+    </div>
+}
+else if (SignInManager.IsSignedIn(User) && User.IsInRole("Customer"))
+{
+    <div class="overview-boxes">
+        <div class="box">
+            <div class="right-side">
+                <div class="box-topic">Available Cars</div>
+                <div class="number">@Model.AvailableCarsCount</div>
+            </div>
+            <i class='bx bx-car cart'></i>
+        </div>
+        <div class="box">
+            <div class="right-side">
+                <div class="box-topic">My Rentals</div>
+                <div class="number">@Model.RentalHistoryCount</div>
+            </div>
+            <i class='bx bx-history cart two'></i>
+        </div>
+        <div class="box">
+            <div class="right-side">
+                <div class="box-topic">Active Offers</div>
+                <div class="number">@Model.ActiveOffersCount</div>
+            </div>
+            <i class='bx bx-gift cart three'></i>
+        </div>
+    </div>
+    <div style="border: 1px solid #ccc; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); border-radius: 10px; width: 1000px;margin: auto;">
+        <canvas id="customerChart"></canvas>
+    </div>
+
+    @if (Model.RecommendedCars != null && Model.RecommendedCars.Count > 0)
+    {
+        <div class="container" style="margin-top: 40px;">
+            <h2 class="car-section-title">Recommended For You</h2>
+            <p class="text-center text-muted mb-4" style="font-size:14px;">
+                <i class="fa fa-users"></i> Other customers who rented similar cars also enjoyed these
+            </p>
+            <div class="row justify-content-center">
+                @foreach (var item in Model.RecommendedCars)
+                {
+                    var displayPrice = (int)Math.Round(item.Price * (double)festivalMultiplier);
+                    <div class="col-md-4 mb-4">
+                        <div class="car-card card p-0" style="border: 2px solid #0A4D3B;">
+                            <div style="position:relative;">
+                                <span style="position:absolute;top:10px;left:10px;background:#0A4D3B;color:#fff;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;z-index:1;">
+                                    <i class="fa fa-star"></i> Recommended
+                                </span>
+                                @if (item.CarBrand != null)
+                                {
+                                    <img src="~/images/@item.CarBrand.PhotoUrl" alt="Car Brand" class="brand-logo" />
+                                }
+                                <img class="car-main-img" src="@Url.Content("~/images/" + item.PhotoUrl)" alt="Car Image" />
+                            </div>
+                            <div class="card-body">
+                                <h5 class="fw-bold mb-1" style="color:#0A4D3B;">
+                                    @item.ModelName
+                                    @if (item.CarBrand != null)
+                                    {
+                                        <small class="text-muted">- @item.CarBrand.BrandName</small>
+                                    }
+                                </h5>
+                                <div class="d-flex justify-content-between text-muted mb-2" style="font-size:13px;">
+                                    <span><i class="fa fa-user"></i> @item.TotalSeats seats</span>
+                                    <span><i class="fa fa-calendar"></i> @item.ModelYear</span>
+                                    <span><i class="fa fa-car"></i> @item.EngineType</span>
+                                </div>
+                                @if (hasFestival)
+                                {
+                                    <p class="mb-0">
+                                        <span style="text-decoration:line-through;color:#999;font-size:0.95rem;">Rs. @item.Price</span>
+                                        <span class="car-price" style="color:#ff6b35;"> Rs. @displayPrice</span>
+                                        <small class="text-muted fw-normal" style="font-size:13px;"> / Day</small>
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="car-price mb-0">Rs. @item.Price <small class="text-muted fw-normal" style="font-size:13px;">/ Day</small></p>
+                                }
+                            </div>
+                            <div class="card-footer bg-white border-0 d-flex justify-content-between pb-3">
+                                <a asp-controller="Home" asp-action="BeforeKhalti" asp-route-carId="@item.Id" class="btn btn-primary" style="border-radius:8px;">Rent Now</a>
+                                <a asp-controller="Home" asp-action="CarDetails" asp-route-id="@item.Id" class="btn btn-outline-secondary" style="border-radius:8px;">See More</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (Model.Offer != null && Model.Offer.Any(o => o.Available))
+    {
+        <div class="cars-section" style="background:#fff;">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-tag"><i class="fa fa-tags mr-1"></i> Special Offers</div>
+                    <h2>Limited Time Deals</h2>
+                    <p>Grab these exclusive discounts before they expire</p>
+                </div>
+                <div class="row">
+                    @foreach (var item in Model.Offer.Where(o => o.Available))
+                    {
+                        var discountAmount = (item.Price * item.DiscountPercentage) / 100;
+                        var offerPrice = item.Price - discountAmount;
+
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="car-card-modern">
+                                <div class="card-img-wrap">
+                                    <span class="avail-tag"><i class="fa fa-fire"></i> @item.DiscountPercentage% OFF</span>
+                                    <img class="car-img" src="@Url.Content("~/images/" + item.PhotoUrl)" alt="@item.CarName" />
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="car-name">@item.CarName <small>- @item.OfferTitle</small></h3>
+                                    <div class="car-specs">
+                                        <span><i class="fa fa-tag"></i> Valid until @item.ValidityPeroid.ToString("MMM dd, yyyy")</span>
+                                    </div>
+
+                                    <div class="car-pricing">
+                                        <span class="old-price">Rs. @item.Price</span>
+                                        <span class="price" style="color:#ff6b35;">Rs. @offerPrice <small>/ Day</small></span>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <a asp-controller="Home" asp-action="OfferCheck" asp-route-offerId="@item.Id" class="btn-rent"><i class="fa fa-shopping-cart"></i> Rent Now</a>
+                                    <a asp-controller="Home" asp-action="OfferDetails" asp-route-id="@item.Id" class="btn-detail"><i class="fa fa-eye"></i> Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">Find Your Perfect<br><span>Ride Today</span></h1>
+            <p class="hero-subtitle">Browse our fleet of well-maintained vehicles. Easy booking, competitive prices, and exceptional service all in one place.</p>
+            <div class="hero-actions">
+                <a asp-controller="Home" asp-action="CarList" class="btn-hero-primary"><i class="fa fa-search mr-1"></i> Browse Cars</a>
+                <a asp-area="Identity" asp-page="/Account/Register" class="btn-hero-secondary"><i class="fa fa-user-plus mr-1"></i> Get Started</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat-item">
+                    <div class="stat-num"><span>@(Model.Car.Count(c => c.Available) > 9 ? "9+" : Model.Car.Count(c => c.Available).ToString())</span></div>
+                    <div class="stat-lbl">Available Cars</div>
+                </div>
+                <div class="hero-stat-item">
+                    <div class="stat-num"><span>@(Model.CarBrands.Count > 9 ? "9+" : Model.CarBrands.Count.ToString())</span></div>
+                    <div class="stat-lbl">Car Brands</div>
+                </div>
+                <div class="hero-stat-item">
+                    <div class="stat-num"><span>@(Model.Offer.Count(o => o.Available == true) > 9 ? "9+" : Model.Offer.Count(o => o.Available == true).ToString())</span></div>
+                    <div class="stat-lbl">Active Offers</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Car.Any())
+    {
+        <div class="car-slider-section">
+            <div class="container">
+                <div class="car-slider-wrapper">
+                    <div class="car-slide-track" id="carSlideTrack">
+                        @foreach (var item in Model.Car.Take(6))
+                        {
+                            <div class="car-slide-item">
+                                <img src="@Url.Content("~/images/" + item.PhotoUrl)" alt="@item.ModelName" />
+                                <div class="car-slide-overlay">
+                                    <h3>@item.ModelName <span style="font-weight:400;font-size:1rem;">- @item.CarBrand?.BrandName</span></h3>
+                                    <p><i class="fa fa-tag"></i> Rs. @item.Price/day &nbsp; <i class="fa fa-user"></i> @item.TotalSeats seats &nbsp; <i class="fa fa-car"></i> @item.EngineType</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <button class="slider-btn slider-prev" onclick="moveSlide(-1)"><i class="fa fa-chevron-left"></i></button>
+                    <button class="slider-btn slider-next" onclick="moveSlide(1)"><i class="fa fa-chevron-right"></i></button>
+                </div>
+                <div class="slider-dots" id="sliderDots"></div>
+            </div>
+        </div>
+    }
+
+    <div class="search-section">
+        <div class="container">
+            <div class="search-card">
+                <div class="input-group-custom">
+                    <select id="brandFilter" onchange="filterByBrand(this.value)">
+                        <option value="">All Brands</option>
+                        @foreach (var brand in Model.CarBrands)
+                        {
+                            <option value="@brand.Id">@brand.BrandName</option>
+                        }
+                    </select>
+                    <form method="get" asp-controller="Home" asp-action="Index" class="search-box" style="flex:2;min-width:200px;position:relative;">
+                        <input type="text" name="search" placeholder="Search by car name or year..." value="@Context.Request.Query["search"]" />
+                        <button type="submit"><i class="fa fa-search"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cars-section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag"><i class="fa fa-car mr-1"></i> Our Fleet</div>
+                <h2>Available Cars for Rent</h2>
+                <p>Choose from our wide selection of quality vehicles</p>
+            </div>
+
+            @if (hasFestival)
+            {
+                <div class="text-center mb-4">
+                    <span style="display:inline-block; background:linear-gradient(90deg,#ff6b35,#f7931e); color:#fff; padding:10px 28px; border-radius:50px; font-weight:700; font-size:1rem; box-shadow:0 4px 15px rgba(255,107,53,0.35);">
+                        <i class="fa fa-star"></i> @Model.ActiveFestivalName Active — @Model.FestivalMultiplier.ToString("F2")× Price Applied!
+                    </span>
+                </div>
+            }
+
+            <div class="row">
+                @foreach (var item in Model.Car)
+                {
+                    if (item.IsCarBooked == false && item.Available == true || item.IsCarBooked == null)
+                    {
+                        var displayPrice = (int)Math.Round(item.Price * (double)festivalMultiplier);
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="car-card-modern">
+                                <div class="card-img-wrap">
+                                    @if (item.CarBrand != null)
+                                    {
+                                        <img src="~/images/@item.CarBrand.PhotoUrl" alt="Brand" class="brand-badge" />
+                                    }
+                                    <span class="avail-tag"><i class="fa fa-check-circle"></i> Available (@item.AvailableCarCount)</span>
+                                    @if (hasFestival)
+                                    {
+                                        <span class="festival-tag"><i class="fa fa-fire"></i> Festival Price</span>
+                                    }
+                                    <img class="car-img" src="@Url.Content("~/images/" + item.PhotoUrl)" alt="@item.ModelName" />
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="car-name">@item.ModelName <small>- @item.CarBrand?.BrandName</small></h3>
+                                    <div class="car-specs">
+                                        <span><i class="fa fa-user"></i> @item.TotalSeats seats</span>
+                                        <span><i class="fa fa-calendar"></i> @item.ModelYear</span>
+                                        <span><i class="fa fa-car"></i> @item.EngineType</span>
+                                    </div>
+                                    <div class="car-pricing">
+                                        @if (hasFestival)
+                                        {
+                                            <span class="old-price">Rs. @item.Price</span>
+                                            <span class="price" style="color:#ff6b35;">Rs. @displayPrice <small>/ Day</small></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="price">Rs. @item.Price <small>/ Day</small></span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <a asp-controller="Home" asp-action="BeforeKhalti" asp-route-carId="@item.Id" class="btn-rent"><i class="fa fa-shopping-cart"></i> Rent Now</a>
+                                    <a asp-controller="Home" asp-action="CarDetails" asp-route-id="@item.Id" class="btn-detail"><i class="fa fa-eye"></i> Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Offer != null && Model.Offer.Any(o => o.Available))
+    {
+        <div class="cars-section" style="background:#fff;">
+            <div class="container">
+                <div class="section-header">
+                    <div class="section-tag"><i class="fa fa-tags mr-1"></i> Special Offers</div>
+                    <h2>Limited Time Deals</h2>
+                    <p>Grab these exclusive discounts before they expire</p>
+                </div>
+                <div class="row">
+                    @foreach (var item in Model.Offer.Where(o => o.Available))
+                    {
+                        var discountAmount = (item.Price * item.DiscountPercentage) / 100;
+                        var offerPrice = item.Price - discountAmount;
+
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="car-card-modern">
+                                <div class="card-img-wrap">
+                                    <span class="avail-tag"><i class="fa fa-fire"></i> @item.DiscountPercentage% OFF</span>
+                                    <img class="car-img" src="@Url.Content("~/images/" + item.PhotoUrl)" alt="@item.CarName" />
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="car-name">@item.CarName <small>- @item.OfferTitle</small></h3>
+                                    <div class="car-specs">
+                                        <span><i class="fa fa-tag"></i> Valid until @item.ValidityPeroid.ToString("MMM dd, yyyy")</span>
+                                    </div>
+
+                                    <div class="car-pricing">
+                                        <span class="old-price">Rs. @item.Price</span>
+                                        <span class="price" style="color:#ff6b35;">Rs. @offerPrice <small>/ Day</small></span>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    @if (SignInManager.IsSignedIn(User))
+                                    {
+                                        <a asp-controller="Home" asp-action="OfferCheck" asp-route-offerId="@item.Id" class="btn-rent"><i class="fa fa-shopping-cart"></i> Rent Now</a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-area="Identity" asp-page="/Account/Register" class="btn-rent"><i class="fa fa-user-plus"></i> Sign Up to Rent</a>
+                                    }
+                                    <a asp-controller="Home" asp-action="OfferDetails" asp-route-id="@item.Id" class="btn-detail"><i class="fa fa-eye"></i> Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="offer-banner-modern">
+        <div class="offer-content">
+            <div class="offer-tag"><i class="fa fa-bolt"></i> Limited Time</div>
+            <h2>Special Offer Just for You</h2>
+            <p>Get up to 60% off on selected rental cars. Don't miss this chance — register now and start saving on your next journey!</p>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <span class="btn-offer"><i class="fa fa-rocket"></i> Explore The Website!</span>
+            }
+            else
+            {
+                <a asp-area="Identity" asp-page="/Account/Register" class="btn-offer"><i class="fa fa-user-plus"></i> Sign Up Now</a>
+            }
+        </div>
+    </div>
+
+    <div class="features-section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-tag"><i class="fa fa-star mr-1"></i> Why Us</div>
+                <h2>Why Choose Us</h2>
+                <p>We provide the best car rental experience for you</p>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <div class="feature-card">
+                        <div class="icon-wrap"><i class="fa fa-calendar-check"></i></div>
+                        <h5>Easy Booking</h5>
+                        <p>Book your car in just a few clicks. Simple, fast and hassle-free online booking process.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-card">
+                        <div class="icon-wrap"><i class="fa fa-tag"></i></div>
+                        <h5>Best Price</h5>
+                        <p>Get the most competitive rental prices with exclusive discounts and special offers.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-card">
+                        <div class="icon-wrap"><i class="fa fa-headset"></i></div>
+                        <h5>24/7 Support</h5>
+                        <p>Our customer support team is available around the clock to assist you anytime.</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-card">
+                        <div class="icon-wrap"><i class="fa fa-shield-alt"></i></div>
+                        <h5>Safe &amp; Secure</h5>
+                        <p>All vehicles are regularly inspected and maintained to ensure your safety on the road.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="steps-section">
+        <div class="container">
+            <div class="steps-header">
+                <div class="section-tag" style="display:inline-block; background:rgba(255,255,255,0.1); color:#ffd700; padding:6px 20px; border-radius:50px; font-size:0.85rem; font-weight:600; margin-bottom:12px;"><i class="fa fa-rocket mr-1"></i> Simple Process</div>
+                <h2>How It Works</h2>
+                <p>Rent a car in 3 simple steps</p>
+            </div>
+            <div class="row justify-content-center" style="position:relative;">
+                <div class="col-md-4 mb-4" style="position:relative;">
+                    <div class="step-connector"></div>
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-icon"><i class="fa fa-car"></i></div>
+                        <h5>Browse Cars</h5>
+                        <p>Explore our wide range of available vehicles and find the perfect car for your needs.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4" style="position:relative;">
+                    <div class="step-connector"></div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-icon"><i class="fa fa-credit-card"></i></div>
+                        <h5>Book Online</h5>
+                        <p>Submit your rental request and complete payment securely online or choose cash on delivery.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-icon"><i class="fa fa-road"></i></div>
+                        <h5>Enjoy Ride</h5>
+                        <p>Pick up your car and enjoy the ride. Return it when done and we handle the rest.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+
+@section Scripts {
+    <script>
+        function filterByBrand(brandId) {
+            if (brandId) {
+                window.location.href = '@Url.Action("FilterCarList", "Home")?brandId=' + brandId;
+            } else {
+                window.location.href = '@Url.Action("Index", "Home")';
+            }
+        }
+        let currentSlide = 0;
+        const track = document.getElementById('carSlideTrack');
+        const dotsContainer = document.getElementById('sliderDots');
+        if (track) {
+            const slides = track.querySelectorAll('.car-slide-item');
+            slides.forEach((_, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'slider-dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => goToSlide(i);
+                dotsContainer.appendChild(dot);
+            });
+            function goToSlide(n) {
+                currentSlide = n;
+                if (n >= slides.length) currentSlide = 0;
+                if (n < 0) currentSlide = slides.length - 1;
+                track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
+                dotsContainer.querySelectorAll('.slider-dot').forEach((d, i) => {
+                    d.classList.toggle('active', i === currentSlide);
+                });
+            }
+            window.moveSlide = (n) => goToSlide(currentSlide + n);
+            setInterval(() => goToSlide(currentSlide + 1), 5000);
+        }
+    </script>
+
+    @if (carsByBrand.Count > 0)
+    {
+        var datasetsJson = string.Join(",", carsByBrand.Select(b => $"{{label: '{b.BrandName}', data: [{b.CarCount}], borderWidth: 1}}"));
+        <script>
+            var ctx = document.getElementById('myChart').getContext('2d');
+            var carChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Car Count'],
+                    datasets: [@Html.Raw(datasetsJson)]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        </script>
+    }
+
+    @if (SignInManager.IsSignedIn(User) && User.IsInRole("Customer") && Model.AvailableCarsByBrand != null && Model.AvailableCarsByBrand.Count > 0)
+    {
+        <script>
+            var ctx2 = document.getElementById('customerChart').getContext('2d');
+            var customerChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.AvailableCarsByBrand.Select(b => $"'{((dynamic)b).BrandName}'")))],
+                    datasets: [{
+                        label: 'Available Cars by Brand',
+                        data: [@Html.Raw(string.Join(",", Model.AvailableCarsByBrand.Select(b => ((dynamic)b).CarCount)))],
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        </script>
+    }
+}

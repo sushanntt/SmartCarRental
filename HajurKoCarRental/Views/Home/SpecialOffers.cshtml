@@ -1,0 +1,194 @@
+@model IEnumerable<HajurKoCarRental.Models.Offer>
+@{
+    ViewData["Title"] = "Special Offers";
+}
+
+<style>
+    .page-hero-simple {
+        background: linear-gradient(135deg, #0A4D3B 0%, #2D8A6E 50%, #6EC4A8 100%);
+        padding: 50px 20px;
+        text-align: center;
+        color: #fff;
+        margin-bottom: 40px;
+    }
+    .page-hero-simple h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0 0 8px;
+    }
+    .page-hero-simple p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    .car-card-modern {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .car-card-modern:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 16px 40px rgba(64,112,244,0.12);
+    }
+    .car-card-modern .card-img-wrap {
+        position: relative;
+        overflow: hidden;
+    }
+    .car-card-modern .card-img-wrap img.car-img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+    .car-card-modern:hover .card-img-wrap img.car-img {
+        transform: scale(1.08);
+    }
+    .car-card-modern .card-img-wrap .avail-tag {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(135deg, #ff6b35, #f7931e);
+        color: #fff;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+    }
+    .car-card-modern .card-body {
+        padding: 20px;
+    }
+    .car-card-modern .card-body .car-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0A4D3B;
+        margin: 0 0 4px;
+    }
+    .car-card-modern .card-body .car-name small {
+        font-weight: 400;
+        color: #6b7a8f;
+        font-size: 0.85rem;
+    }
+    .car-card-modern .card-body .car-specs {
+        display: flex;
+        gap: 16px;
+        margin: 10px 0 14px;
+        font-size: 0.8rem;
+        color: #6b7a8f;
+    }
+    .car-card-modern .card-body .car-specs span i { margin-right: 4px; color: #0A4D3B; }
+    .car-card-modern .card-body .car-pricing {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .car-card-modern .card-body .car-pricing .price {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #0A4D3B;
+    }
+    .car-card-modern .card-body .car-pricing .price small { font-size: 0.8rem; font-weight: 400; color: #6b7a8f; }
+    .car-card-modern .card-body .car-pricing .old-price {
+        text-decoration: line-through;
+        color: #aaa;
+        font-size: 0.9rem;
+    }
+    .car-card-modern .card-footer {
+        display: flex;
+        gap: 10px;
+        padding: 0 20px 20px;
+        background: transparent;
+        border: none;
+    }
+    .car-card-modern .card-footer .btn-rent {
+        flex: 1;
+        background: linear-gradient(135deg, #0A4D3B, #063627);
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .car-card-modern .card-footer .btn-rent:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(64,112,244,0.3); color: #fff; }
+    .car-card-modern .card-footer .btn-detail {
+        flex: 1;
+        background: #E8F5E9;
+        color: #0A4D3B;
+        border: 2px solid transparent;
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .car-card-modern .card-footer .btn-detail:hover { background: #e4ebff; color: #063627; }
+</style>
+
+<div class="page-hero-simple">
+    <h1><i class="fa fa-tags"></i> Special Offers</h1>
+    <p>Grab these exclusive discounts before they expire</p>
+</div>
+
+<div class="container">
+    @if (!Model.Any(o => o.Available))
+    {
+        <div class="text-center py-5">
+            <i class="fa fa-gift fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">No special offers available right now</h4>
+            <p class="text-muted">Check back later for exciting discounts on car rentals!</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model.Where(o => o.Available))
+            {
+                var discountAmount = (item.Price * item.DiscountPercentage) / 100;
+                var offerPrice = item.Price - discountAmount;
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="car-card-modern">
+                        <div class="card-img-wrap">
+                            <span class="avail-tag"><i class="fa fa-fire"></i> @item.DiscountPercentage% OFF</span>
+                            <img class="car-img" src="@Url.Content("~/images/" + item.PhotoUrl)" alt="@item.CarName" />
+                        </div>
+                        <div class="card-body">
+                            <h3 class="car-name">@item.CarName <small>- @item.OfferTitle</small></h3>
+                            <div class="car-specs">
+                                <span><i class="fa fa-tag"></i> Valid until @item.ValidityPeroid.ToString("MMM dd, yyyy")</span>
+                            </div>
+                            @if (item.OfferBranches != null && item.OfferBranches.Any())
+                            {
+                                <div style="margin:4px 0 10px;font-size:0.8rem;color:#666;">
+                                    <i class="fa fa-map-marker"></i>
+                                    @foreach (var ob in item.OfferBranches)
+                                    {
+                                        <span style="display:inline-block;background:#f0f0f0;padding:1px 8px;border-radius:10px;margin:0 2px 3px 0;">@ob.Branch?.Name (@ob.AvailableCount)</span>
+                                    }
+                                </div>
+                            }
+                            <div class="car-pricing">
+                                <span class="old-price">Rs. @item.Price</span>
+                                <span class="price" style="color:#ff6b35;">Rs. @offerPrice <small>/ Day</small></span>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <a asp-controller="Home" asp-action="OfferCheck" asp-route-offerId="@item.Id" class="btn-rent"><i class="fa fa-shopping-cart"></i> Rent Now</a>
+                            <a asp-controller="Home" asp-action="OfferDetails" asp-route-id="@item.Id" class="btn-detail"><i class="fa fa-eye"></i> Details</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

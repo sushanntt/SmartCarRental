@@ -1,0 +1,89 @@
+@model IEnumerable<HajurKoCarRental.Models.Festival>
+@{
+    ViewData["Title"] = "Festival Management";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Festival Management</h1>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fa fa-plus"></i> Add New Festival
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        @TempData["Success"]
+    </div>
+}
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Active Festivals</h5>
+    </div>
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fa fa-calendar-times fa-3x text-muted"></i>
+                <p class="text-muted">No festivals configured</p>
+                <a asp-action="Create" class="btn btn-outline-primary">
+                    <i class="fa fa-plus"></i> Add First Festival
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Festival Name</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Price Multiplier</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var festival in Model)
+                        {
+                            <tr>
+                                <td>@festival.Name</td>
+                                <td>@festival.StartDate.ToString("MMM dd, yyyy")</td>
+                                <td>@festival.EndDate.ToString("MMM dd, yyyy")</td>
+                                <td>@festival.PriceMultiplier.ToString("F2")x</td>
+                                <td>
+                                    @if (festival.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-action="Edit" asp-route-id="@festival.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-edit"></i> Edit
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@festival.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this festival?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fa fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+

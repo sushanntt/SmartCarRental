@@ -1,0 +1,177 @@
+@model IEnumerable<HajurKoCarRental.Models.RentalHistory>
+
+@{
+    ViewData["Title"] = "Rental History";
+    <style>
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            font-size: 0.9em;
+            font-weight: bold;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            background-color: green;
+            color: white;
+        }
+
+        .badge-pending {
+            background-color: red;
+        }
+    .history-table td, .history-table th {
+        white-space: nowrap;
+    }
+    .history-table td img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+    }
+    </style>
+}
+
+<h1>Rental History</h1>
+<div class="mb-3">
+    <a asp-action="ExportExcel" class="btn btn-success btn-sm"><i class="fa fa-file-excel"></i> Export Excel</a>
+    <a asp-action="ExportPdf" class="btn btn-danger btn-sm"><i class="fa fa-file-pdf"></i> Export PDF</a>
+</div>
+<br/>
+<div class="table-responsive">
+<table class="table history-table">
+    <thead>
+        <tr>
+            <th>
+                User Email
+            </th>
+            <th>
+                Name
+            </th>
+            <th>
+                Address
+            </th>
+            <th>
+                Phone Number
+            </th>
+            <th>
+                Car Model
+            </th>
+            <th>
+                Car Photo
+            </th>
+            <th>
+                Car Number
+            </th>
+            <th>
+                Pickup Branch
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AuthorizedBy)
+            </th>
+            <th>
+                Duration
+            </th>
+            <th>
+                Amount
+            </th>
+            <th>
+                Payment Method
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@if (!Model.Any())
+{
+        <tr>
+            <td colspan="14" class="text-center py-4">
+                <i class="fa fa-history fa-3x text-muted mb-3"></i>
+                <p class="text-muted mb-0">No rental history found.</p>
+            </td>
+        </tr>
+}
+else
+{
+        @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.User.Email)
+            </td>
+            <td>
+                @item.User.Firstname @item.User.Lastname
+            </td>
+            <td>
+                @item.User.Address
+            </td>
+            <td>
+                @item.User.PhoneNumber
+            </td>
+            <td>
+                @item.Car.ModelName
+            </td>
+            <td>
+                <img src="@Url.Content("~/images/" + item.Car.PhotoUrl)" alt="Image" width="100" height="100" />
+            </td>
+            <td>
+                @item.Car.CarNumber
+            </td>
+            <td>
+                @(item.PickupBranch?.Name ?? "-")
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AuthorizedBy)
+            </td>
+            <td>
+                @if (item.Duration > 0 && item.Hours > 0)
+                {
+                    <text>@item.Duration d @item.Hours hr</text>
+                }
+                else if (item.Duration > 0)
+                {
+                    <text>@item.Duration day(s)</text>
+                }
+                else
+                {
+                    <text>@item.Hours hr</text>
+                }
+            </td>
+            <td>
+                NPR @item.Amount.ToString("N0")
+            </td>
+            <td>
+                @if (!string.IsNullOrWhiteSpace(item.PaymentMethod))
+                {
+                    <span>@item.PaymentMethod</span>
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </td>
+            <td>
+                @if (item.Status == true)
+                {
+                    <span class="badge">Approved/Completed</span>
+                }
+                else if (item.ActionType == "Rejected")
+                {
+                    <span class="badge badge-pending">Rejected</span>
+                }
+                else if (item.ActionType == "Removed")
+                {
+                    <span class="badge badge-pending">Removed</span>
+                }
+                else
+                {
+                    <span class="badge badge-pending">Rejected/Cancelled</span>
+                }
+            </td>
+        </tr>
+        }
+}
+    </tbody>
+</table>
+</div>

@@ -1,0 +1,226 @@
+@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+    <style>
+        .register-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: #f5f7fa;
+        }
+        .register-card {
+            width: 100%;
+            max-width: 580px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.06);
+            padding: 40px 44px;
+        }
+        .register-card .form-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0A4D3B;
+            margin: 0 0 4px;
+            text-align: center;
+        }
+        .register-card .form-subtitle {
+            color: #6b7a8f;
+            font-size: 0.9rem;
+            margin: 0 0 30px;
+            text-align: center;
+        }
+        .register-card .form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 0;
+        }
+        .register-card .form-row .inp-box { flex: 1; }
+        .register-card .inp-box {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .register-card .inp-box label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: #0A4D3B;
+            margin-bottom: 6px;
+        }
+        .register-card .inp-box input {
+            height: 48px;
+            width: 100%;
+            outline: none;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            padding: 0 16px;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.3s ease;
+            color: #0A4D3B;
+        }
+        .register-card .inp-box input:focus {
+            border-color: #0A4D3B;
+            box-shadow: 0 0 0 3px rgba(64,112,244,0.1);
+        }
+        .register-card .inp-box input::placeholder { color: #a0aec0; font-size: 0.85rem; }
+        .register-card .inp-box .text-danger { font-size: 0.78rem; margin-top: 4px; display: block; }
+        .register-card .btn-submit {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0A4D3B, #063627);
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+        .register-card .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(64,112,244,0.35);
+        }
+        .register-card .auth-link {
+            display: block;
+            text-align: center;
+            color: #6b7a8f;
+            font-size: 0.88rem;
+            margin-top: 4px;
+        }
+        .register-card .auth-link a {
+            color: #0A4D3B;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .register-card .auth-link a:hover { text-decoration: underline; }
+        .register-card .divider {
+            text-align: center;
+            margin: 18px 0 14px;
+            position: relative;
+        }
+        .register-card .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+        .register-card .divider span {
+            background: #fff;
+            padding: 0 14px;
+            font-size: 0.85rem;
+            color: #6b7a8f;
+            position: relative;
+        }
+        .register-card .ext-btn {
+            width: 100%;
+            height: 48px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+            color: #333;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .register-card .ext-btn:hover {
+            border-color: #0A4D3B;
+        }
+
+        @@media (max-width: 480px) {
+            .register-card { padding: 28px 20px; }
+            .register-card .form-row { flex-direction: column; gap: 0; }
+        }
+    </style>
+}
+
+<div class="register-page">
+    <div class="register-card">
+        <div class="form-title"><i class="fa fa-user-plus mr-2" style="color:#0A4D3B;"></i>Create Account</div>
+        <div class="form-subtitle">Fill in your details to get started</div>
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-row">
+                <div class="inp-box">
+                    <label asp-for="Input.Firstname"></label>
+                    <input asp-for="Input.Firstname" placeholder="First name" pattern="[a-zA-Z\s]+" title="Only letters allowed" aria-required="true" />
+                    <span asp-validation-for="Input.Firstname" class="text-danger"></span>
+                </div>
+                <div class="inp-box">
+                    <label asp-for="Input.Lastname"></label>
+                    <input asp-for="Input.Lastname" placeholder="Last name" pattern="[a-zA-Z\s]+" title="Only letters allowed" aria-required="true" />
+                    <span asp-validation-for="Input.Lastname" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="inp-box">
+                    <label asp-for="Input.Address"></label>
+                    <input asp-for="Input.Address" placeholder="Your address" pattern="[a-zA-Z\s]+" title="Only letters allowed" aria-required="true" />
+                    <span asp-validation-for="Input.Address" class="text-danger"></span>
+                </div>
+                <div class="inp-box">
+                    <label asp-for="Input.PhoneNumber"></label>
+                    <input asp-for="Input.PhoneNumber" type="tel" placeholder="Phone number" inputmode="numeric" pattern="[0-9]{10}" title="Exactly 10 digits" maxlength="10" aria-required="true" />
+                    <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="inp-box">
+                <label asp-for="Input.Email"></label>
+                    <input asp-for="Input.Email" placeholder="your@email.com" autocomplete="username" pattern="[a-zA-Z].*" title="Email must start with a letter" aria-required="true" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="form-row">
+                <div class="inp-box">
+                    <label asp-for="Input.Password"></label>
+                    <input asp-for="Input.Password" placeholder="Create password" autocomplete="new-password" aria-required="true" />
+                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                </div>
+                <div class="inp-box">
+                    <label asp-for="Input.ConfirmPassword"></label>
+                    <input asp-for="Input.ConfirmPassword" placeholder="Confirm password" autocomplete="new-password" aria-required="true" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+            <button id="registerSubmit" type="submit" class="btn-submit">
+                <i class="fa fa-check-circle"></i> Register
+            </button>
+        </form>
+        <div class="auth-link">
+            Already have an account? <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in</a>
+        </div>
+        @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+        {
+            <div class="divider"><span>or register with</span></div>
+            @foreach (var provider in Model.ExternalLogins)
+            {
+                <form method="post" action="/Identity/Account/ExternalLogin" style="margin-bottom:8px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <input type="hidden" name="action" value="register" />
+                    <button type="submit" name="provider" value="@provider.Name" class="ext-btn">
+                        <svg viewBox="0 0 48 48" style="width:18px;height:18px;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.54 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.97.97 7.72 2.68 11.03l7.86-6.44z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+                        @provider.DisplayName
+                    </button>
+                </form>
+            }
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

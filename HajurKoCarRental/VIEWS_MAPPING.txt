@@ -1,0 +1,101 @@
+HajurKoCarRental — View-to-Role Mapping
+============================================
+
+ADMIN SIDEBAR (22 pages)
+-------------------------
+Analytics           → Views/Analytics/Index.cshtml
+Users               → Views/Users/Index.cshtml
+Car Brand           → Views/CarBrands/Index.cshtml (+ Create, Edit, Details, Delete)
+Car                 → Views/Cars/Index.cshtml (+ Create, Edit, Details, Delete)
+Offers              → Views/Offer/Index.cshtml (+ Create, Edit, Details, Delete)
+Festivals           → Views/Festival/Index.cshtml (+ Create, Edit)
+Branches            → Views/Branches/Index.cshtml (+ Create, Edit, Details, Delete)
+Rent Request        → Views/Rents/Index.cshtml
+Offer Rent Request  → Views/Offer/OfferRequest.cshtml
+Rental History      → Views/RentalHistory/Index.cshtml
+Refund Details      → Views/Rents/RefundDetails.cshtml
+Return Car          → Views/Rents/ReturnedCar.cshtml
+Overdue Rentals     → Views/Rents/OverdueRentals.cshtml
+Frequent Customer   → Views/CarsReport/FrequentCustomer.cshtml
+Inactive Customer   → Views/CarsReport/InactiveCustomers.cshtml
+Audit Logs          → Views/AuditLogs/Index.cshtml
+Late Fees           → Views/LateFee/Index.cshtml
+Churn Prediction    → Views/ChurnReport/Index.cshtml
+Sales Report        → Views/SalesReport/Index.cshtml
+Cars Report         → Views/CarsReport/Index.cshtml
+Damage Request      → Views/DamageRequest/Index.cshtml
+Chat                → Views/Chat/Index.cshtml
+
+CUSTOMER SIDEBAR (9 pages)
+---------------------------
+Dashboard           → Views/CustomerDashboard/Index.cshtml
+Car List            → Views/Home/CarList.cshtml
+Special Offers      → Views/Home/SpecialOffers.cshtml
+Rental Request      → Views/Rents/Index.cshtml
+Offer Rent Request  → Views/Offer/OfferRequest.cshtml
+Rental History      → Views/RentalHistory/Index.cshtml
+Refund Details      → Views/Rents/RefundDetails.cshtml
+Damage Request      → Views/DamageRequest/Index.cshtml
+Late Fees           → Views/LateFee/MyFees.cshtml
+
+CUSTOMER-ONLY (reached via flow, no sidebar link)
+---------------------------------------------------
+Views/Rent/Index.cshtml              — Profile completion before renting
+Views/Rent/RentDescription.cshtml    — Rent a car (hours, duration, payment)
+Views/DamageRequest/Create.cshtml    — Submit damage report
+
+GUEST NAVBAR (4 pages)
+-----------------------
+Home        → Views/Home/Index.cshtml
+Cars        → Views/Home/CarList.cshtml
+About       → Views/Home/About.cshtml
+Contact     → Views/Home/Contact.cshtml
+
+PUBLIC / GUEST (no auth required)
+-----------------------------------
+Views/Home/Index.cshtml           — Landing page
+Views/Home/CarDetails.cshtml      — Car detail page
+Views/Home/OfferDetails.cshtml    — Offer detail page
+Views/Home/Compare.cshtml         — Compare cars
+Views/Home/RentDescription.cshtml — Offer-based rental form
+Areas/Identity/Pages/Account/Login.cshtml
+Areas/Identity/Pages/Account/Register.cshtml
+
+BOTH (Admin + Customer)
+-------------------------
+Views/Rents/Index.cshtml         — Rent request list
+Views/Rents/Details.cshtml       — Rent request details
+Views/Rents/Edit.cshtml          — Edit/approve rent request
+Views/Rents/Create.cshtml        — Create rent request
+Views/Rents/Delete.cshtml        — Delete/reject rent confirmation
+Views/Rents/RefundDetails.cshtml — Refund management
+Views/Offer/OfferRequest.cshtml  — Offer-based requests
+Views/Offer/OfferRequestDetails.cshtml
+Views/RentalHistory/Index.cshtml — Rental history (admin sees all, customer sees own)
+Views/DamageRequest/Index.cshtml — Damage requests
+Views/LateFee/Index.cshtml       — Late fee admin management
+Views/LateFee/MyFees.cshtml      — Customer late fees
+
+SHARED / INFRASTRUCTURE (all roles)
+-------------------------------------
+Views/Shared/_Layout.cshtml
+Views/Shared/_LoginPartial.cshtml
+Views/Shared/_ValidationScriptsPartial.cshtml
+Views/Shared/_SidebarNotificationBadge.cshtml
+Views/Shared/_ChatWidget.cshtml (customer only)
+Views/Shared/Error.cshtml
+Views/_ViewStart.cshtml
+Views/_ViewImports.cshtml
+
+IDENTITY PAGES (Areas/Identity/Pages/Account)
+----------------------------------------------
+Register.cshtml         — Public
+Login.cshtml            — Public
+Logout.cshtml           — Both
+ConfirmEmail.cshtml     — Public
+ConfirmRegistration.cshtml — Public
+ForgotPassword.cshtml   — Public
+ResetPassword.cshtml    — Public
+RegisterConfirmation.cshtml — Public
+ExternalLogin.cshtml    — Public
+Manage/SetPassword.cshtml — Both

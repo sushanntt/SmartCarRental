@@ -1,0 +1,106 @@
+@model IEnumerable<HajurKoCarRental.Models.Car>
+
+@{
+    ViewData["Title"] = "Cars Report";
+
+    <style>
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            font-size: 0.9em;
+            font-weight: bold;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            background-color: green;
+            color: white;
+        }
+        .badge-pending{
+                background-color: red;
+        }
+    </style>
+}
+
+<h1>Cars Report</h1>
+
+<div class="btn-group" role="group" style="margin-top: 70px;">
+    <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="height: 60px;">
+        Select Search Term
+    </button>
+    <div id="dropdown" class="dropdown-menu" aria-labelledby="btnGroupDrop1" style="margin-left:-55px;">
+        <a class="dropdown-item" asp-controller="CarsReport" asp-action="FilterData" asp-route-searchText="Available">Available Cars</a>
+        <a class="dropdown-item" asp-controller="CarsReport" asp-action="FilterData" asp-route-searchText="Unavailable">Unavailable Cars</a>
+        <a class="dropdown-item" asp-controller="CarsReport" asp-action="FilterData" asp-route-searchText="Frequently">Frequently Rented Cars</a>
+        <a class="dropdown-item" asp-controller="CarsReport" asp-action="FilterData" asp-route-searchText="Never">Never Rented Cars</a>
+    </div>
+</div>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h3 id="title">All Cars</h3>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Car</th>
+                            <th>Car Number</th>
+                            <th>Price</th>
+                            <th>Engine Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rental in Model)
+                        {
+                            <tr>
+                                <td>@rental.ModelName</td>
+                                <td>@rental.CarNumber</td>
+                                <td>@rental.Price</td>
+                                <td>@rental.EngineType</td>
+                                <td>
+                                    @if (rental.IsCarBooked == false || rental.IsCarBooked==null)
+                                    {
+                                        <span class="badge">Available</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-pending">Unavailable</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        const title = document.querySelector('#title');
+        const params = new URLSearchParams(window.location.search);
+        const searchText = params.get('searchText');
+        if (searchText) {
+            const map = { Available: 'Available Cars', Unavailable: 'Unavailable Cars', Frequently: 'Frequently Rented Cars', Never: 'Never Rented Cars' };
+            title.textContent = map[searchText] || 'All Cars';
+        } else {
+            title.textContent = 'All Cars';
+        }
+
+        document.querySelector('#dropdown').addEventListener('click', (event) => {
+            if (event.target.classList.contains('dropdown-item')) {
+                const text = event.target.getAttribute('asp-route-searchText');
+                const map = { Available: 'Available Cars', Unavailable: 'Unavailable Cars', Frequently: 'Frequently Rented Cars', Never: 'Never Rented Cars' };
+                title.textContent = map[text] || event.target.textContent;
+            }
+        });
+    </script>
+
+}

@@ -1,0 +1,212 @@
+@using Microsoft.AspNetCore.Identity
+@using HajurKoCarRental.Areas.Identity.Data
+@inject UserManager<HajurKoCarRentalUser> UserManager
+@inject SignInManager<HajurKoCarRentalUser> SignInManager
+
+@{
+    var isCustomer = SignInManager.IsSignedIn(User) && User.IsInRole("Customer");
+}
+
+@if (isCustomer)
+{
+    var user = await UserManager.GetUserAsync(User);
+    var userId = user?.Id;
+
+    <style>
+        .chat-widget-toggle {
+            position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px;
+            border-radius: 50%; background: #0A4D3B; color: white; border: none;
+            font-size: 28px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+        }
+        .chat-widget-toggle:hover { background: #0A4D3B; }
+        .chat-widget-toggle .badge {
+            position: absolute; top: -5px; right: -5px; background: #dc3545;
+            color: white; border-radius: 50%; padding: 2px 7px; font-size: 12px; display: none;
+        }
+        .chat-panel {
+            position: fixed; bottom: 90px; right: 20px; width: 370px; height: 500px;
+            background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            z-index: 1000; display: none; flex-direction: column; overflow: hidden;
+        }
+        .chat-panel.open { display: flex; }
+        .chat-panel-header {
+            padding: 15px; background: #0A4D3B; color: white; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .chat-panel-header h6 { margin: 0; }
+        .chat-panel-header button { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+        .chat-panel-messages {
+            flex: 1; overflow-y: auto; padding: 15px; background: #f8f9fa;
+        }
+        .chat-panel-msg { margin-bottom: 10px; display: flex; }
+        .chat-panel-msg.mine { justify-content: flex-end; }
+        .chat-panel-msg .bubble {
+            max-width: 80%; padding: 8px 12px; border-radius: 15px; word-wrap: break-word; font-size: 14px;
+        }
+        .chat-panel-msg.mine .bubble { background: #0A4D3B; color: white; border-bottom-right-radius: 3px; }
+        .chat-panel-msg.theirs .bubble { background: white; border: 1px solid #dee2e6; border-bottom-left-radius: 3px; }
+        .chat-panel-msg .time { font-size: 10px; color: #999; margin-top: 2px; padding: 0 5px; }
+        .chat-panel-input {
+            display: flex; padding: 12px; border-top: 1px solid #dee2e6; background: white;
+        }
+        .chat-panel-input input {
+            flex: 1; padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 20px;
+            outline: none; margin-right: 8px; font-size: 14px;
+        }
+        .chat-panel-input button {
+            border-radius: 20px; padding: 8px 18px; font-size: 14px;
+        }
+        @@media (max-width: 480px) {
+            .chat-panel { width: calc(100vw - 40px); right: 20px; height: 400px; }
+        }
+    </style>
+
+    <button class="chat-widget-toggle" id="chatToggle" onclick="toggleChat()">
+        <i class="fas fa-comment-dots"></i>
+        <span class="badge" id="chatBadge">0</span>
+    </button>
+
+    <div class="chat-panel" id="chatPanel">
+        <div class="chat-panel-header">
+            <h6><i class="fas fa-headset me-2"></i> Support Chat</h6>
+            <button onclick="toggleChat()">&times;</button>
+        </div>
+        <div class="chat-panel-messages" id="chatPanelMessages">
+            <div class="text-center text-muted py-4" id="chatLoading">Loading...</div>
+        </div>
+        <div class="chat-panel-input">
+            <input type="text" id="chatPanelInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendChatMessage()" />
+            <button class="btn btn-primary btn-sm" onclick="sendChatMessage()">Send</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.15/signalr.min.js"></script>
+    <script>
+        let chatConnection = null;
+        let chatAdminId = null;
+        let chatOpen = false;
+        let currentUserId = '@userId';
+        let unreadCount = 0;
+
+        function showBadge(count) {
+            const badge = document.getElementById('chatBadge');
+            if (count > 0) { badge.textContent = count; badge.style.display = 'flex'; }
+            else badge.style.display = 'none';
+        }
+
+        function toggleChat() {
+            chatOpen = !chatOpen;
+            document.getElementById('chatPanel').classList.toggle('open', chatOpen);
+            if (chatOpen) {
+                if (!chatConnection) initChat();
+                // Mark conversation as read
+                unreadCount = 0;
+                showBadge(0);
+                fetch('/Chat/MarkConversationRead', { method: 'POST' }).catch(() => {});
+                document.getElementById('chatPanelMessages').scrollTop = document.getElementById('chatPanelMessages').scrollHeight;
+            }
+        }
+
+        function initChat() {
+            fetch('/Chat/GetMessages')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.error) { document.getElementById('chatLoading').textContent = data.error; return; }
+                    chatAdminId = data.adminId;
+                    renderMessages(data.messages);
+                    connectSignalR();
+                })
+                .catch(() => document.getElementById('chatLoading').textContent = 'Failed to load messages');
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('chatPanelMessages');
+            container.innerHTML = '';
+            if (!messages || messages.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-4">No messages yet. Say hello!</div>';
+                return;
+            }
+            messages.forEach(m => addChatBubble(m.message, m.sentAt, m.isMine));
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addChatBubble(text, sentAt, isMine) {
+            const container = document.getElementById('chatPanelMessages');
+            const loading = document.getElementById('chatLoading');
+            if (loading) loading.remove();
+
+            const div = document.createElement('div');
+            div.className = 'chat-panel-msg ' + (isMine ? 'mine' : 'theirs');
+            const time = sentAt ? new Date(sentAt).toLocaleString('en-US', { month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+            div.innerHTML = '<div class="bubble">' + escapeHtml(text) +
+                '<div class="time">' + time + '</div></div>';
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function connectSignalR() {
+            chatConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/chatHub")
+                .withAutomaticReconnect()
+                .build();
+
+            chatConnection.on("ReceiveMessage", function (senderId, message, sentAt) {
+                if (senderId === chatAdminId || senderId === currentUserId) {
+                    addChatBubble(message, sentAt, senderId === currentUserId);
+                }
+                if (senderId === chatAdminId && !chatOpen) {
+                    unreadCount++;
+                    showBadge(unreadCount);
+                }
+            });
+
+            chatConnection.start().catch(err => console.error('SignalR error:', err));
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chatPanelInput');
+            const msg = input.value.trim();
+            if (!msg || !chatAdminId) return;
+
+            if (chatConnection && chatConnection.state === signalR.HubConnectionState.Connected) {
+                chatConnection.invoke("SendMessage", chatAdminId, msg).catch(err => {
+                    sendPostMessage(chatAdminId, msg);
+                });
+            } else {
+                sendPostMessage(chatAdminId, msg);
+            }
+
+            addChatBubble(msg, new Date().toISOString(), true);
+            input.value = '';
+        }
+
+        function sendPostMessage(receiverId, msg) {
+            var formData = new FormData();
+            formData.append('receiverId', receiverId);
+            formData.append('message', msg);
+            fetch('/Chat/SendMessage', {
+                method: 'POST',
+                body: formData
+            }).catch(err => console.error('Send fallback failed:', err));
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Fetch initial unread count on page load
+        fetch('/Chat/GetMessages')
+            .then(r => r.json())
+            .then(data => {
+                if (data.unreadCount > 0) {
+                    unreadCount = data.unreadCount;
+                    showBadge(unreadCount);
+                }
+                chatAdminId = data.adminId;
+            })
+            .catch(() => {});
+    </script>
+}

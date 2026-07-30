@@ -1,0 +1,242 @@
+@model HajurKoCarRental.Models.Rent
+
+@{
+    ViewData["Title"] = "Approve Rental Request";
+}
+
+<div class="container-fluid py-4">
+    <div class="card shadow-sm border-0 rounded-3">
+        <div class="card-header bg-primary text-white py-3 rounded-top" style="background: linear-gradient(135deg, #0A4D3B, #063627);">
+            <h3 class="mb-0"><i class="fa fa-check-circle mr-2"></i>Verify Rental Request</h3>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Edit">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="Id" />
+
+                <div hidden>
+                    <div class="form-group">
+                        <label asp-for="CarId" class="control-label"></label>
+                        <select asp-for="CarId" class="form-control" asp-items="ViewBag.CarId"></select>
+                        <span asp-validation-for="CarId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="UserId" class="control-label"></label>
+                        <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId"></select>
+                        <span asp-validation-for="UserId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="PaymentMethod" class="control-label"></label>
+                        <input asp-for="PaymentMethod" class="form-control" />
+                        <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Amount" class="control-label"></label>
+                        <input asp-for="Amount" class="form-control" />
+                        <span asp-validation-for="Amount" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="RequestDate" class="control-label"></label>
+                        <input asp-for="RequestDate" class="form-control" />
+                        <span asp-validation-for="RequestDate" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="RentalDate" class="control-label"></label>
+                        <input asp-for="RentalDate" class="form-control" />
+                        <span asp-validation-for="RentalDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light border-0 rounded-3 mb-4">
+                            <div class="card-header bg-transparent border-bottom-0 py-2 px-3">
+                                <h5 class="mb-0" style="color:#0A4D3B;"><i class="fa fa-user mr-2"></i>Customer Info</h5>
+                            </div>
+                            <div class="card-body px-3 py-2">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr>
+                                        <td class="text-muted" style="width:120px;">Name</td>
+                                        <td><strong>@Model.User.Firstname @Model.User.Lastname</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Email</td>
+                                        <td>@Model.User.Email</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Phone</td>
+                                        <td>@Model.User.PhoneNumber</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Address</td>
+                                        <td>@Model.User.Address</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light border-0 rounded-3 mb-4">
+                            <div class="card-header bg-transparent border-bottom-0 py-2 px-3">
+                                <h5 class="mb-0" style="color:#0A4D3B;"><i class="fa fa-car mr-2"></i>Rental Details</h5>
+                            </div>
+                            <div class="card-body px-3 py-2">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr>
+                                        <td class="text-muted" style="width:120px;">Car Number</td>
+                                        <td><strong>@Model.Car.CarNumber</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Model</td>
+                                        <td>@Model.Car.ModelName</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Rental Date</td>
+                                        <td>@Model.RentalDate.ToString("MMM dd, yyyy HH:mm")</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Duration</td>
+                                        <td>
+                                            @if (Model.Duration > 0 && Model.Hours > 0)
+                                            {
+                                                <text>@Model.Duration d @Model.Hours hr</text>
+                                            }
+                                            else if (Model.Duration > 0)
+                                            {
+                                                <text>@Model.Duration day(s)</text>
+                                            }
+                                            else
+                                            {
+                                                <text>@Model.Hours hr</text>
+                                            }
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-0 rounded-3 mb-4" style="background:#f8f9fc;">
+                            <div class="card-header bg-transparent border-bottom-0 py-2 px-3">
+                                <h6 class="mb-0" style="color:#0A4D3B;"><i class="fa fa-id-card mr-2"></i>Profile Photo</h6>
+                            </div>
+                            <div class="card-body text-center py-3 px-3">
+                                <img src="@Url.Content("~/images/" + Model.User.ProfilePhotoUrl)" alt="Profile" class="img-thumbnail rounded-3 shadow-sm" style="max-height:200px;cursor:pointer;object-fit:cover;" onclick="openImage(this.src)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 rounded-3 mb-4" style="background:#f8f9fc;">
+                            <div class="card-header bg-transparent border-bottom-0 py-2 px-3">
+                                <h6 class="mb-0" style="color:#0A4D3B;"><i class="fa fa-address-card mr-2"></i>Citizenship</h6>
+                            </div>
+                            <div class="card-body text-center py-3 px-3">
+                                <img src="@Url.Content("~/images/" + Model.User.CitizenshipPhotoUrl)" alt="Citizenship" class="img-thumbnail rounded-3 shadow-sm" style="max-height:200px;cursor:pointer;object-fit:cover;" onclick="openImage(this.src)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 rounded-3 mb-4" style="background:#f8f9fc;">
+                            <div class="card-header bg-transparent border-bottom-0 py-2 px-3">
+                                <h6 class="mb-0" style="color:#0A4D3B;"><i class="fa fa-id-card mr-2"></i>License</h6>
+                            </div>
+                            <div class="card-body text-center py-3 px-3">
+                                <img src="@Url.Content("~/images/" + Model.User.LicencePhotoUrl)" alt="License" class="img-thumbnail rounded-3 shadow-sm" style="max-height:200px;cursor:pointer;object-fit:cover;" onclick="openImage(this.src)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card bg-light border-0 rounded-3 mb-4">
+                    <div class="card-header bg-transparent border-bottom-0 py-2 px-3">
+                        <h5 class="mb-0" style="color:#0A4D3B;"><i class="fa fa-credit-card mr-2"></i>Payment Summary</h5>
+                    </div>
+                    <div class="card-body px-3 py-2">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="p-3 rounded-3 text-center" style="background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                                    <small class="text-muted d-block">Payment Method</small>
+                                    <strong>@Model.PaymentMethod</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded-3 text-center" style="background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                                    <small class="text-muted d-block">Total Amount</small>
+                                    <strong>Rs. @Model.Amount.ToString("N0")</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded-3 text-center" style="background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                                    <small class="text-muted d-block">Advance Payment</small>
+                                    <strong>Rs. @Model.AdvancePaid.ToString("N0")</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 rounded-3 text-center" style="background:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                                    <small class="text-muted d-block">Pay at Return</small>
+                                    <strong style="color:@(Model.RemainingAmount > 0 ? "#e74a3b" : "#1cc88a");">@(Model.RemainingAmount > 0 ? "Rs. " + Model.RemainingAmount.ToString("N0") : "Paid")</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 rounded-3 mb-4" style="background:#fff8f0;border-left:4px solid #f6c23e !important;">
+                    <div class="card-body py-3 px-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-auto">
+                                <h6 class="mb-0" style="color:#856404;"><i class="fa fa-gavel mr-2"></i>Action Required</h6>
+                            </div>
+                            <div class="col">
+                                <span class="text-muted small">Review customer documents and approve or reject this rental request.</span>
+                            </div>
+                            <div class="col-md-auto">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="Verified" asp-for="Verified" style="width:40px;height:20px;">
+                                    <label class="form-check-label fw-bold" for="Verified" style="color:#0A4D3B;">Approve Rental</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-3 px-4">
+                        <i class="fa fa-arrow-left mr-1"></i> Back to List
+                    </a>
+                    <button type="submit" class="btn px-5 py-2 rounded-3 text-white fw-bold" style="background: linear-gradient(135deg, #0A4D3B, #063627);">
+                        <i class="fa fa-save mr-1"></i> Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Image zoom modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="background:transparent;border:none;">
+            <div class="text-end mb-2">
+                <button type="button" class="btn btn-sm btn-light rounded-3" data-bs-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+            </div>
+            <img id="modalImage" src="" style="width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);" />
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function openImage(src) {
+            document.getElementById('modalImage').src = src;
+            var modal = new bootstrap.Modal(document.getElementById('imageModal'));
+            modal.show();
+        }
+    </script>
+}

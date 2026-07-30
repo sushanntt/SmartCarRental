@@ -1,0 +1,132 @@
+@page
+@model ExternalLoginModel
+@{
+    ViewData["Title"] = "Register";
+    <style>
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #E8F5E9;
+            padding: 20px;
+        }
+        .auth-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 40px 36px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        }
+        .auth-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0A4D3B;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .auth-subtitle {
+            text-align: center;
+            color: #6b7a8f;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+        .auth-card .small-label {
+            font-size: 0.85rem;
+            color: #444;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .auth-card .auth-input {
+            width: 100%;
+            height: 48px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0 14px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        .auth-card .auth-input:focus {
+            border-color: #0A4D3B;
+            box-shadow: 0 0 0 3px rgba(64,112,244,0.1);
+            outline: none;
+        }
+        .auth-card .auth-btn {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0A4D3B, #063627);
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .auth-card .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(64,112,244,0.35);
+        }
+        @@media (max-width: 480px) {
+            .auth-card { padding: 28px 20px; }
+        }
+    </style>
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h1 class="auth-title">@ViewData["Title"]</h1>
+        <p class="auth-subtitle">Associate your @Model.ProviderDisplayName account.</p>
+
+        <p class="text-muted text-center mb-4">
+            You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.
+            Please enter additional information below to complete your registration.
+        </p>
+
+        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Firstname" class="form-label fw-semibold small-label"></label>
+                    <input asp-for="Input.Firstname" class="form-control auth-input" placeholder="John" />
+                    <span asp-validation-for="Input.Firstname" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Lastname" class="form-label fw-semibold small-label"></label>
+                    <input asp-for="Input.Lastname" class="form-control auth-input" placeholder="Doe" />
+                    <span asp-validation-for="Input.Lastname" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label fw-semibold small-label"></label>
+                <input asp-for="Input.Email" class="form-control auth-input" placeholder="name@example.com" />
+                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Address" class="form-label fw-semibold small-label"></label>
+                <input asp-for="Input.Address" class="form-control auth-input" placeholder="Your address" />
+                <span asp-validation-for="Input.Address" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.PhoneNumber" class="form-label fw-semibold small-label"></label>
+                <input asp-for="Input.PhoneNumber" class="form-control auth-input" placeholder="98XXXXXXXX" />
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn auth-btn w-100 mt-2">Register</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

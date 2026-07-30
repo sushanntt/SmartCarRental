@@ -1,0 +1,62 @@
+@using HajurKoCarRental.Areas.Identity.Data
+@model List<HajurKoCarRentalUser>
+
+@{
+    ViewData["Title"] = "Customers";
+}
+
+<h1>Customers</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Profile Complete</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @if (item.ProfilePhotoUrl != null)
+                    {
+                        <img src="@Url.Content("~/images/" + item.ProfilePhotoUrl)" width="60" height="60" style="border-radius:50%;object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <img src="@Url.Content("~/images/no-photos.png")" width="60" height="60" style="border-radius:50%;object-fit:cover;" />
+                    }
+                </td>
+                <td>@item.Firstname @item.Lastname</td>
+                <td>@item.Email</td>
+                <td>@item.PhoneNumber</td>
+                <td>@item.Address</td>
+                <td>
+                    @if (item.IsProfileComplete == true)
+                    {
+                        <span class="badge bg-success">Yes</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning">No</span>
+                    }
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">View Details</a>
+
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

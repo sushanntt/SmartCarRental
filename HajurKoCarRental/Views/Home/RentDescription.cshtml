@@ -1,0 +1,444 @@
+@using static HajurKoCarRental.Controllers.HomeController
+@using HajurKoCarRental.Models
+@inject HajurKoCarRental.Data.HajurKoCarRentalContext _context
+@model UserAndOffer
+
+@{
+    ViewData["Title"] = "Rent Description";
+    var allBranches = _context.Branches?.ToList() ?? new List<Branch>();
+    var offerBranchCounts = Model.Offer.OfferBranches?.ToDictionary(ob => ob.BranchId, ob => ob.AvailableCount) ?? new Dictionary<Guid, int>();
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <style>
+        .rd-wrap { max-width: 1100px; margin: 0 auto; padding: 30px 16px; }
+        .rd-layout { display: flex; gap: 28px; align-items: flex-start; }
+        .rd-layout .rd-left { flex: 1; position: sticky; top: 20px; }
+        .rd-layout .rd-right { flex: 1.2; }
+        @@media (max-width: 900px) { .rd-layout { flex-direction: column; } .rd-layout .rd-left { position: static; } }
+        .rd-gallery {
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+        .rd-gallery-img {
+            width: 100%;
+            object-fit: contain;
+            display: block;
+            transition: transform 0.5s ease;
+            background: #f5f5f5;
+        }
+        .rd-gallery-img:hover { transform: scale(1.03); }
+        .rd-gallery-body { padding: 20px 24px 24px; }
+        .rd-gallery-body h4 { font-weight: 700; color: #1a1a2e; margin: 0 0 4px; font-size: 1.3rem; }
+        .rd-gallery-body .rd-meta { color: #6b7a8f; font-size: 0.85rem; margin-bottom: 10px; }
+        .rd-gallery-body .rd-meta i { width: 18px; color: #0A4D3B; }
+        .rd-gallery-body p { color: #444; font-size: 0.9rem; line-height: 1.6; margin: 0; }
+        .rd-right-inner { display: flex; flex-direction: column; gap: 20px; }
+        .rd-panel {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .rd-panel-header {
+            padding: 16px 24px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1a1a2e;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .rd-panel-header i { color: #0A4D3B; font-size: 1.1rem; }
+        .rd-panel-body { padding: 20px 24px 24px; }
+        .rd-price-big {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #0A4D3B, #1a6e54);
+            border-radius: 16px;
+            color: #fff;
+        }
+        .rd-price-big .rd-amount { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+        .rd-price-big .rd-amount small { font-size: 1rem; font-weight: 400; opacity: 0.7; }
+        .rd-price-big .rd-original { text-decoration: line-through; opacity: 0.6; font-size: 0.9rem; }
+        .rd-price-big .rd-total-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+        .rd-form-group { margin-bottom: 16px; }
+        .rd-form-group label { font-size: 0.8rem; font-weight: 600; color: #444; margin-bottom: 4px; display: block; }
+        .rd-form-group .form-control {
+            border: 2px solid #e8ecf4; border-radius: 12px; padding: 10px 14px;
+            font-size: 0.9rem; transition: border-color 0.2s ease;
+        }
+        .rd-form-group .form-control:focus { border-color: #0A4D3B; box-shadow: 0 0 0 3px rgba(10,77,59,0.1); }
+        .rd-pay-cards { display: flex; gap: 10px; }
+        .rd-pay-card {
+            flex: 1; padding: 14px 10px; border: 2px solid #e8ecf4; border-radius: 14px;
+            cursor: pointer; text-align: center; transition: all 0.2s ease;
+        }
+        .rd-pay-card:hover { border-color: #b0d4c4; }
+        .rd-pay-card.selected { border-color: #0A4D3B; background: #E8F5E9; }
+        .rd-pay-card input { display: none; }
+        .rd-pay-card .rd-pay-icon { font-size: 1.6rem; margin-bottom: 4px; }
+        .rd-pay-card .rd-pay-label { font-size: 0.75rem; font-weight: 600; color: #444; }
+        .rd-pay-card.selected .rd-pay-label { color: #0A4D3B; }
+        .rd-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .rd-map-wrap { border-radius: 14px; overflow: hidden; border: 2px solid #e8ecf4; }
+        .rd-map-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #e8ecf4;
+        }
+        .rd-map-bar button {
+            background: none; border: 1px solid #0A4D3B; color: #0A4D3B;
+            border-radius: 8px; padding: 5px 14px; font-size: 0.75rem; font-weight: 600;
+            transition: all 0.2s ease; cursor: pointer;
+        }
+        .rd-map-bar button:hover { background: #0A4D3B; color: #fff; }
+        .rd-branch-card {
+            background: #E8F5E9; border-radius: 14px; padding: 14px 18px;
+            border: 1px solid #C8E6C9; margin-top: 10px; display: none;
+        }
+        .rd-branch-card h6 { color: #0A4D3B; font-weight: 700; margin: 0 0 4px; font-size: 0.9rem; }
+        .rd-branch-card p { margin: 0; font-size: 0.8rem; color: #555; }
+        .rd-branch-card .badge-nearest { background: #0A4D3B; color: #ffd700; font-size: 0.65rem; padding: 2px 10px; border-radius: 50px; margin-right: 6px; }
+        .rd-submit-wrap { margin-top: 4px; }
+        .rd-btn-final {
+            width: 100%; padding: 16px; font-size: 1.1rem; font-weight: 700;
+            border-radius: 14px; background: linear-gradient(135deg, #0A4D3B, #063627);
+            border: none; color: #fff; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .rd-btn-final:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(10,77,59,0.35); }
+        .rd-btn-final:active { transform: translateY(0); }
+    </style>
+}
+
+<div class="rd-wrap">
+    <div class="rd-layout">
+        <div class="rd-left">
+            <div class="rd-gallery">
+                <img src="~/images/@Model.Offer.PhotoUrl" alt="Car Image" class="rd-gallery-img">
+                <div class="rd-gallery-body">
+                    <h4>@Model.Offer.CarName</h4>
+                    <div class="rd-meta">
+                        <i class="fas fa-tag"></i> @Model.Offer.OfferTitle
+                        @if (!string.IsNullOrWhiteSpace(Model.Offer.OfferDescription))
+                        {
+                            <span> &middot; @Model.Offer.OfferDescription</span>
+                        }
+                    </div>
+                    <p>Select your pickup branch and rental period below. The nearest branch with available cars is automatically assigned. Choose between Khalti or Cash on Delivery.</p>
+                </div>
+            </div>
+        </div>
+        <div class="rd-right">
+            <div class="rd-right-inner">
+                @{
+                    var discountAmount = (Model.Offer.Price * Model.Offer.DiscountPercentage) / 100;
+                    var basePrice = Model.Offer.Price - discountAmount;
+                }
+                <div class="rd-panel">
+                    <div class="rd-price-big">
+                        <div class="rd-original">Rs. @Model.Offer.Price</div>
+                        <div class="rd-amount">Rs. @basePrice <small>/day</small></div>
+                        <div class="rd-total-label">@Model.Offer.DiscountPercentage% offer discount applied</div>
+                        <div id="estimatedTotal" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
+                            <div style="font-size:0.8rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Estimated Total</div>
+                            <div style="font-size:1.8rem;font-weight:800;color:#ffffff;">Rs. <span id="estimatedAmount">0</span></div>
+                            <div id="advanceBreakdown" style="display:none;font-size:0.85rem;margin-top:6px;padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.1);">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                                    <span style="opacity:0.8;">Advance Payment (50%):</span>
+                                    <span style="font-weight:600;">Rs. <span id="advanceAmount">0</span></span>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;">
+                                    <span style="opacity:0.8;">Pay at Return:</span>
+                                    <span style="font-weight:600;">Rs. <span id="remainingAmount">0</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-panel">
+                    <div class="rd-panel-header"><i class="fas fa-credit-card"></i> Payment Method</div>
+                    <div class="rd-panel-body">
+                        <div class="rd-pay-cards">
+                            <div class="rd-pay-card selected" onclick="selectPayment(this,'khalti')">
+                                <input type="radio" name="paymentOption" value="khalti" id="khaltiRadio" checked>
+                                <div class="rd-pay-icon"><img src="~/images/khalti-logo.png" alt="Khalti" style="height:30px;"></div>
+                                <div class="rd-pay-label">Khalti</div>
+                            </div>
+                            <div class="rd-pay-card" onclick="selectPayment(this,'cod')">
+                                <input type="radio" name="paymentOption" value="cod" id="codRadio">
+                                <div class="rd-pay-icon"><i class="fas fa-money-bill-wave" style="color:#28a745;font-size:1.6rem;"></i></div>
+                                <div class="rd-pay-label">Pay at Branch</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-panel">
+                    <div class="rd-panel-header"><i class="fas fa-calendar"></i> Rental Period</div>
+                    <div class="rd-panel-body">
+                        <div class="rd-row-2">
+                            <div class="rd-form-group">
+                                <label>Start Date &amp; Time</label>
+                                <input type="text" id="rentalStart" name="rentalStart" class="form-control" placeholder="Select date & time" required readonly>
+                            </div>
+                            <div class="rd-form-group">
+                                <label>Duration (days)</label>
+                                <input type="number" id="duration" name="duration" class="form-control" min="1" max="30" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-panel">
+                    <div class="rd-panel-header"><i class="fas fa-map-marker-alt"></i> Pickup Location</div>
+                    <div class="rd-panel-body" style="padding-bottom:16px;">
+                        <div class="rd-map-wrap">
+                            <div class="rd-map-bar">
+                                <span>Choose on map or use location</span>
+                                <button type="button" onclick="getUserLocation()"><i class="fas fa-location-dot"></i> My Location</button>
+                            </div>
+                            <div id="userMap" style="height:220px;"></div>
+                        </div>
+                        <input type="hidden" id="pickupBranch" name="pickupBranch" value="" />
+                        <input type="hidden" id="pickupLat" name="pickupLat" value="" />
+                        <input type="hidden" id="pickupLng" name="pickupLng" value="" />
+                        <div id="nearestBranchInfo" class="rd-branch-card">
+                            <h6><span class="badge-nearest">ASSIGNED</span> <span id="nearestBranchName"></span></h6>
+                            <p><i class="fas fa-phone me-1"></i> <span id="nearestBranchContact"></span> &middot; <i class="fas fa-car me-1"></i> <span id="nearestBranchAvail"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-submit-wrap">
+                    <button type="submit" class="rd-btn-final" onclick="redirect()">Rent Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        flatpickr("#rentalStart", {
+            enableTime: true,
+            dateFormat: "Y-m-d\\TH:i",
+            altInput: true,
+            altFormat: "M j, Y h:i K",
+            minDate: "today",
+            disable: [function(date) { return date < new Date(); }],
+            onChange: function(selectedDates, dateStr) {
+                if (selectedDates.length && selectedDates[0] < new Date(new Date().toDateString())) {
+                    this.clear();
+                    alert("You cannot select a past date and time.");
+                }
+            }
+        });
+
+        function selectPayment(el, val) {
+            document.querySelectorAll('.rd-pay-card').forEach(function(c) { c.classList.remove('selected'); });
+            el.classList.add('selected');
+            document.getElementById(val === 'khalti' ? 'khaltiRadio' : 'codRadio').checked = true;
+        }
+        if (document.getElementById('khaltiRadio')) document.getElementById('khaltiRadio').checked = true;
+
+        var branchData = [
+            @foreach (var branch in allBranches)
+            {
+                var isAvail = offerBranchCounts.ContainsKey(branch.Id) && offerBranchCounts[branch.Id] > 0;
+                <text>
+                {
+                    id: '@branch.Id',
+                    lat: @(branch.Latitude?.ToString("F6") ?? "0"),
+                    lng: @(branch.Longitude?.ToString("F6") ?? "0"),
+                    name: '@Html.Raw(branch.Name)',
+                    contact: '@Html.Raw((branch.Contact ?? "").Replace("'", "\\'"))',
+                    avail: @(isAvail ? offerBranchCounts[branch.Id].ToString() : "0"),
+                    latVal: @(branch.Latitude?.ToString("F6") ?? "null"),
+                    lngVal: @(branch.Longitude?.ToString("F6") ?? "null")
+                },
+                </text>
+            }
+        ].filter(function(b) { return b.latVal !== null && b.lngVal !== null; });
+
+        const pricePerDay = @basePrice;
+
+        document.getElementById("duration").addEventListener("input", function() {
+            let val = parseInt(this.value);
+            if (!isNaN(val)) {
+                if (val < 1) { this.value = 1; val = 1; }
+                else if (val > 30) { alert("You can only rent for a maximum of 30 days."); this.value = 30; val = 30; }
+            }
+            const duration = val || 1;
+            const total = pricePerDay * duration;
+            document.getElementById("estimatedTotal").style.display = 'block';
+            document.getElementById("estimatedAmount").innerText = Math.round(total);
+            var ab = document.getElementById("advanceBreakdown");
+            ab.style.display = 'block';
+            document.getElementById("advanceAmount").innerText = Math.round(total * 0.5);
+            document.getElementById("remainingAmount").innerText = Math.round(total - total * 0.5);
+        });
+
+        var userMap = L.map('userMap').setView([27.7172, 85.3240], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(userMap);
+
+        var branchMarkers = [];
+        var userMarker = null;
+
+        function placeUserMarker(lat, lng) {
+            if (userMarker === null) {
+                userMarker = L.circleMarker([lat, lng], {
+                    radius: 10,
+                    fillColor: '#ff6b35',
+                    color: '#fff',
+                    weight: 2,
+                    fillOpacity: 0.9
+                }).addTo(userMap).bindTooltip('Your pickup location');
+            } else {
+                userMarker.setLatLng([lat, lng]);
+            }
+        }
+
+        branchData.forEach(function(b) {
+            var color = b.avail > 0 ? '#0A4D3B' : '#aaa';
+            var marker = L.circleMarker([b.lat, b.lng], {
+                radius: 8,
+                fillColor: color,
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 0.9
+            }).addTo(userMap);
+            marker.bindTooltip(b.name + (b.avail > 0 ? ' (' + b.avail + ' avail)' : ' (unavailable)'));
+            branchMarkers.push(marker);
+        });
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            var R = 6371;
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLon = (lon2 - lon1) * Math.PI / 180;
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function findNearestBranch(userLat, userLng) {
+            var nearest = null;
+            var minDist = Infinity;
+            branchData.forEach(function(b) {
+                if (b.avail > 0) {
+                    var dist = haversine(userLat, userLng, b.lat, b.lng);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = b;
+                    }
+                }
+            });
+            return nearest;
+        }
+
+        function updateNearestUI(nearest, userLat, userLng) {
+            if (nearest) {
+                document.getElementById('nearestBranchInfo').style.display = 'block';
+                document.getElementById('nearestBranchName').innerText = nearest.name;
+                document.getElementById('nearestBranchContact').innerText = nearest.contact || 'Contact not set';
+                document.getElementById('nearestBranchAvail').innerText = nearest.avail + ' car(s) available';
+
+                var distKm = haversine(userLat, userLng, nearest.lat, nearest.lng);
+                document.getElementById('nearestBranchName').innerText += ' (' + distKm.toFixed(1) + ' km)';
+
+                document.getElementById('pickupBranch').value = nearest.id;
+
+                branchMarkers.forEach(function(m) { m.setRadius(8); m.setStyle({ fillColor: '#0A4D3B' }); });
+                var nearestIdx = branchData.indexOf(nearest);
+                if (nearestIdx >= 0 && branchMarkers[nearestIdx]) {
+                    branchMarkers[nearestIdx].setRadius(12);
+                    branchMarkers[nearestIdx].setStyle({ fillColor: '#ffd700' });
+                }
+            }
+        }
+
+        userMap.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            document.getElementById('pickupLat').value = lat.toFixed(6);
+            document.getElementById('pickupLng').value = lng.toFixed(6);
+            placeUserMarker(lat, lng);
+            var nearest = findNearestBranch(lat, lng);
+            updateNearestUI(nearest, lat, lng);
+        });
+
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    var lat = pos.coords.latitude;
+                    var lng = pos.coords.longitude;
+                    document.getElementById('pickupLat').value = lat.toFixed(6);
+                    document.getElementById('pickupLng').value = lng.toFixed(6);
+                    userMap.setView([lat, lng], 14);
+                    placeUserMarker(lat, lng);
+                    var nearest = findNearestBranch(lat, lng);
+                    updateNearestUI(nearest, lat, lng);
+                }, function() {
+                    alert('Could not get your location. Please click on the map instead.');
+                });
+            } else {
+                alert('Geolocation is not supported. Please click on the map to set your location.');
+            }
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                document.getElementById('pickupLat').value = lat.toFixed(6);
+                document.getElementById('pickupLng').value = lng.toFixed(6);
+                userMap.setView([lat, lng], 14);
+                placeUserMarker(lat, lng);
+                var nearest = findNearestBranch(lat, lng);
+                if (nearest) updateNearestUI(nearest, lat, lng);
+            });
+        }
+
+        function redirect() {
+            const rentalStart = document.getElementById("rentalStart").value;
+            const duration = document.getElementById("duration").value || 1;
+
+            if (!rentalStart) { alert("Please select a Rental Date and Time."); return; }
+            if (new Date(rentalStart) < new Date(new Date().toDateString())) { alert("You cannot rent a car for a past date and time."); return; }
+            const durationVal = parseInt(duration);
+            if (isNaN(durationVal) || durationVal < 1 || durationVal > 30) { alert("Please enter a valid number of days between 1 and 30."); return; }
+
+            var carId = '@Model.Offer.Id';
+            var pickupBranch = document.getElementById("pickupBranch").value || "";
+            var pickupLat = document.getElementById("pickupLat").value || "";
+            var pickupLng = document.getElementById("pickupLng").value || "";
+
+            if (!pickupBranch) { alert("Please select a pickup branch."); return; }
+
+            var coords = '&pickupLat=' + encodeURIComponent(pickupLat) + '&pickupLng=' + encodeURIComponent(pickupLng);
+
+            if (document.getElementById('khaltiRadio').checked) {
+                window.location.href = '@Url.Action("KhaltiPayment", "Home", new { carId = Model.Offer.Id })'
+                    + '&rentalStart=' + encodeURIComponent(rentalStart)
+                    + '&duration=' + duration
+                    + '&pickupBranch=' + encodeURIComponent(pickupBranch) + coords;
+            } else if (document.getElementById('codRadio').checked) {
+                window.location.href = '@Url.Action("SubmitRequest", "Home", new { carId = Model.Offer.Id })'
+                    + '&rentalStart=' + encodeURIComponent(rentalStart)
+                    + '&duration=' + duration
+                    + '&pickupBranch=' + encodeURIComponent(pickupBranch) + coords;
+            } else {
+                alert("Please select a payment option.");
+            }
+        }
+    </script>
+}

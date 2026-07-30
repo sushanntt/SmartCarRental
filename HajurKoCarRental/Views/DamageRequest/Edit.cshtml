@@ -1,0 +1,69 @@
+@model HajurKoCarRental.Models.CarDamage
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>CarDamage</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="DamageDescription" class="control-label"></label>
+                <input asp-for="DamageDescription" class="form-control" />
+                <span asp-validation-for="DamageDescription" class="text-danger"></span>
+            </div>
+            <div class="form-group" hidden>
+                <label asp-for="UserId" class="control-label"></label>
+                <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId"></select>
+                <span asp-validation-for="UserId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="@Model.User.UserName" class="control-label"></label>
+                <input asp-for="@Model.User.UserName" class="form-control" disabled />
+            </div>
+            <div class="form-group">
+                <label asp-for="@Model.User.PhoneNumber" class="control-label"></label>
+                <input asp-for="@Model.User.PhoneNumber" class="form-control" disabled />
+            </div>
+            <div class="form-group" hidden>
+                <label asp-for="CarId" class="control-label"></label>
+                <select asp-for="CarId" class="form-control" asp-items="ViewBag.CarId"></select>
+                <span asp-validation-for="CarId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="@Model.Car.CarNumber" class="control-label"></label>
+                <input asp-for="@Model.Car.CarNumber" class="form-control" disabled />
+            </div>
+            <div class="form-group" hidden>
+                <label asp-for="PhotoUrl" class="control-label"></label>
+                <input asp-for="PhotoUrl" class="form-control" />
+                <span asp-validation-for="PhotoUrl" class="text-danger"></span>
+            </div>
+            <img src="~/images/@Model.PhotoUrl" class="img-fluid rounded mx-auto d-block mb-3" alt="Damage Picture">
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="DamagePaid" /> @Html.DisplayNameFor(model => model.DamagePaid)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="DamageCharge" class="control-label"></label>
+                <input asp-for="DamageCharge" class="form-control" />
+                <span asp-validation-for="DamageCharge" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+

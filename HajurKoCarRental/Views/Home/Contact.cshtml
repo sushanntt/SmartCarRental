@@ -1,0 +1,79 @@
+@{
+    ViewData["Title"] = "Contact Us";
+
+}
+
+<div class="container1">
+    <div class="content1">
+      <div class="left-side">
+        <div class="address details">
+          <i class="fas fa-map-marker-alt"></i>
+          <div class="topic">Address</div>
+          <div class="text-one">Lalitpur, Nepal</div>
+          <div class="text-two">Bakumari</div>
+        </div>
+        <div class="phone details">
+          <i class="fas fa-phone-alt"></i>
+          <div class="topic">Phone</div>
+          <div class="text-one">+977 9842749628</div>
+          <div class="text-two">+977 98765820127</div>
+        </div>
+        <div class="email details">
+          <i class="fas fa-envelope"></i>
+          <div class="topic">Email</div>
+          <div class="text-one">sushaantthapa000@gmail.com</div>
+          <div class="text-two">anmolbohora546@gmail.com</div>
+        </div>
+      </div>
+      <div class="right-side">
+        <div class="topic-text">Send us a message</div>
+      <form method="post" action="@Url.Action("SendMail", "Home")">
+          <div class="input-box">
+            <input type="text" id="name" name="name" class="inpdata" placeholder="Enter your name">
+            <div class="error-message" id="name-error"></div>
+          </div>
+          <div class="input-box">
+            <input type="text" id="email" class="inpdata" name="email" placeholder="Enter your email">
+            <div class="error-message" id="email-error"></div>
+          </div>
+          <div class="input-box message-box">
+            <textarea id="message" name="message" placeholder="Enter your message"></textarea>
+            <div class="error-message" id="message-error"></div>
+          </div>
+          <div class="button">
+            <input type="submit" class="sub" value="Send Now">
+          </div>
+        </form>
+
+    </div>
+    </div>
+  </div>
+      
+<script>
+      document.querySelector('form').addEventListener('submit', (event) => {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const message = document.getElementById('message').value;
+
+      let hasError = false;
+      if (name.trim() === '') {
+        document.getElementById('name-error').textContent = 'Please enter your name';
+        hasError = true;
+      }
+      if (email.trim() === '') {
+        document.getElementById('email-error').textContent = 'Please enter your email';
+        hasError = true;
+      }
+      if (message.trim() === '') {
+        document.getElementById('message-error').textContent = 'Please enter your message';
+        hasError = true;
+      }
+
+      if (hasError) {
+        event.preventDefault();
+        return;
+      }
+});
+
+</script>
+

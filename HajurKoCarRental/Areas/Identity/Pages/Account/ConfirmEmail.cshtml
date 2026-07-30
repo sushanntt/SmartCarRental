@@ -1,0 +1,85 @@
+@page
+@model ConfirmEmailModel
+@{
+    ViewData["Title"] = "Confirm email";
+    <style>
+        .confirm-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: #f5f7fa;
+        }
+        .confirm-card {
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.06);
+            padding: 48px 44px;
+            text-align: center;
+        }
+        .confirm-card .icon-wrap {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .confirm-card .icon-wrap.success { background: linear-gradient(135deg, #d4edda, #c3e6cb); }
+        .confirm-card .icon-wrap.success i { font-size: 1.8rem; color: #1cc88a; }
+        .confirm-card .icon-wrap.error { background: linear-gradient(135deg, #f8d7da, #f5c6cb); }
+        .confirm-card .icon-wrap.error i { font-size: 1.8rem; color: #e74a3b; }
+        .confirm-card h2 { font-size: 1.5rem; font-weight: 800; color: #0A4D3B; margin: 0 0 8px; }
+        .confirm-card p { color: #6b7a8f; font-size: 0.92rem; line-height: 1.7; margin: 0 0 24px; }
+        .confirm-card .status-msg { font-size: 0.92rem; font-weight: 600; margin-bottom: 24px; }
+        .confirm-card .status-msg.success { color: #1cc88a; }
+        .confirm-card .status-msg.error { color: #e74a3b; }
+        .confirm-card .btn-done {
+            display: inline-block;
+            padding: 12px 36px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0A4D3B, #063627);
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .confirm-card .btn-done:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(64,112,244,0.35); color: #fff; }
+    </style>
+}
+
+@{
+    var isSuccess = Model.StatusMessage?.Contains("Thank you") == true || Model.StatusMessage?.Contains("error") == false;
+    var isError = Model.StatusMessage?.Contains("error") == true;
+}
+
+<div class="confirm-page">
+    <div class="confirm-card">
+        @if (isError)
+        {
+            <div class="icon-wrap error">
+                <i class="fa fa-times-circle"></i>
+            </div>
+            <h2>Confirmation Failed</h2>
+            <p class="status-msg error">@Model.StatusMessage</p>
+        }
+        else
+        {
+            <div class="icon-wrap success">
+                <i class="fa fa-check-circle"></i>
+            </div>
+            <h2>Email Confirmed</h2>
+            <p class="status-msg success">@Model.StatusMessage</p>
+            <p>Your account is now active. You can sign in and start renting cars.</p>
+            <a asp-page="./Login" class="btn-done">
+                <i class="fa fa-sign-in-alt mr-1"></i> Sign In
+            </a>
+        }
+    </div>
+</div>

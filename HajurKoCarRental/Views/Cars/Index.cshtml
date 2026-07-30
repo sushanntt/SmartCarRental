@@ -1,0 +1,96 @@
+@model IEnumerable<HajurKoCarRental.Models.Car>
+
+@{
+    ViewData["Title"] = "Cars";
+}
+
+<h1>View Cars</h1>
+
+<p style="float:right;margin-right:2rem;">
+    <a asp-action="Create" class="btn btn-primary">Add New Car</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.ModelName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CarNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CarBrand)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ModelYear)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalSeats)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.EngineType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Price)
+            </th>
+            <th>
+                Image
+            </th>
+            <th>
+                Branches (Count)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Available)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModelName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CarNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CarBrand.BrandName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ModelYear)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalSeats) seats
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EngineType)
+            </td>
+            <td>
+                Rs. @Html.DisplayFor(modelItem => item.Price)
+            </td>
+            <td>
+                <img src="@Url.Content("~/images/" + item.PhotoUrl)" alt="Image" width="100" height="100" />
+            </td>
+            <td style="font-size:0.85rem;">
+                @if (item.CarBranches != null && item.CarBranches.Any())
+                {
+                    @string.Join(", ", item.CarBranches.Select(cb => $"{cb.Branch?.Name ?? "?"} ({cb.AvailableCount})"))
+                }
+                else
+                {
+                    <span class="text-muted">@item.AvailableCarCount total</span>
+                }
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Available)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

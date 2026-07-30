@@ -1,0 +1,166 @@
+@using HajurKoCarRental.Areas.Identity.Data
+@using Microsoft.AspNetCore.Identity
+@model IEnumerable<HajurKoCarRental.Models.CarDamage>
+@inject SignInManager<HajurKoCarRentalUser> SignInManager
+
+@{
+    ViewData["Title"] = "Damage Requests";
+
+    <style>
+        .card {
+            border-radius: 20px;
+            box-shadow: 0px 10px 20px rgba(0,0,0,0.3);
+            background-color: #fff;
+            margin-bottom: 30px;
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .card-text {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+
+        .card {
+            margin-bottom: 15px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            font-size: 0.9em;
+            font-weight: bold;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            background-color: green;
+            color: white;
+        }
+
+        .badge-pending {
+            background-color: red;
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            font-size: 0.9em;
+            font-weight: bold;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            color: white;
+        }
+
+        .badge-warning {
+            background-color: #ffc107;
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            font-size: 0.9em;
+            font-weight: bold;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            color: black;
+        }
+
+</style>
+}
+
+<div class="container mt-5">
+    <h1 class="mb-4">Damage Requests</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fa fa-exclamation-triangle fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">No damage requests found</h4>
+            <p class="text-muted">There are no damage reports submitted yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <form>
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <div class="row align-items-center justify-content-between position-relative">
+                                    <div class="row align-items-center justify-content-between">
+                                        @if (item.DamagePaid == true) {
+                                            <h6 class="card-title" style="color: lawngreen">The damage has been paid!</h6>
+                                        }
+                                        <div class="col-8">
+                                            <h6 class="card-title">Car Number: @item.Car.CarNumber</h6>
+                                            <p class="card-text">User Name: @item.User.Firstname @item.User.Lastname</p>
+                                            <p class="card-text">User Email: @item.User.Email</p>
+                                            <p class="card-text">User Phont No.: @item.User.PhoneNumber</p>
+                                        </div>
+                                        <div class="col-4 mt-5 justify-content-end">
+                                            @if (item.DamagePaid == null || item.DamagePaid == false)
+                                            {
+                                                <p class="card-text">Damage Payment:  <span class="badge-pending">Pending Payment</span></p>
+                                            }
+                                            else
+                                            {
+                                                <p class="card-text">Damage Payment:  <span class="badge">Damage Paid</span></p>
+                                            }
+                                            @if (item.DamageCharge == null)
+                                            {
+                                                <p class="card-text">Damage Charge: <span class="badge badge-warning">Pending</span></p>
+                                            } else {
+                                                <p class="card-text">Damage Charge: @item.DamageCharge</p>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-6" hidden>
+                                        <label class="control-label">Damage Cost</label>
+                                        <input asp-for="@item.DamageCharge" disabled class="form-control" />
+                                        <div class="col-6">
+                                            <input type="checkbox" class="form-check-input" id="tickInput" disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 mb-3">
+                                    <img src="~/images/@item.PhotoUrl" alt="Damage Picture" style="max-width: 100%; margin: 10px 0; border-radius: 5px;">
+                                </div>
+                                <h5>Description</h5>
+                                <p class="card-text">@item.DamageDescription</p>
+                                @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-success">Edit</a>
+                                }
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

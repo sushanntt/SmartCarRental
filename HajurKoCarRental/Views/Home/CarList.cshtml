@@ -1,0 +1,403 @@
+@using static HajurKoCarRental.Controllers.HomeController
+@model CarViewModel
+@{
+    ViewData["Title"] = "Car List";
+    var festivalMultiplier = Model.FestivalMultiplier;
+    var hasFestival = festivalMultiplier > 1.0m;
+}
+
+<style>
+    .carlist-hero {
+        background: linear-gradient(135deg, #0A4D3B 0%, #2D8A6E 100%);
+        padding: 40px 0 32px;
+        margin-bottom: 0;
+        position: relative;
+    }
+    .carlist-hero h1 { color: #fff; font-weight: 700; font-size: 1.8rem; margin: 0; }
+    .carlist-hero p { color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 0.95rem; }
+
+    .filter-bar {
+        background: #fff;
+        border-radius: 16px;
+        padding: 20px 24px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        margin-top: -20px;
+        position: relative;
+        z-index: 10;
+        margin-bottom: 30px;
+    }
+    .filter-bar .filter-inner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .filter-bar .filter-inner select {
+        height: 44px;
+        border: 2px solid #e8ecf4;
+        border-radius: 10px;
+        padding: 0 14px;
+        font-size: 0.9rem;
+        background: #fafbff;
+        min-width: 150px;
+        flex: 1;
+        transition: border-color 0.3s ease;
+        cursor: pointer;
+    }
+    .filter-bar .filter-inner select:focus { border-color: #0A4D3B; outline: none; }
+    .filter-bar .filter-inner .search-wrap {
+        flex: 2;
+        min-width: 200px;
+        position: relative;
+    }
+    .filter-bar .filter-inner .search-wrap input {
+        width: 100%;
+        height: 44px;
+        border: 2px solid #e8ecf4;
+        border-radius: 10px;
+        padding: 0 44px 0 16px;
+        font-size: 0.9rem;
+        background: #fafbff;
+        transition: border-color 0.3s ease;
+    }
+    .filter-bar .filter-inner .search-wrap input:focus { border-color: #0A4D3B; outline: none; }
+    .filter-bar .filter-inner .search-wrap button {
+        position: absolute;
+        right: 4px;
+        top: 4px;
+        bottom: 4px;
+        width: 36px;
+        border: none;
+        background: #0A4D3B;
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+    .filter-bar .filter-inner .search-wrap button:hover { background: #063627; }
+
+    .car-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 24px;
+    }
+    .car-card-cl {
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        position: relative;
+    }
+    .car-card-cl:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 40px rgba(64,112,244,0.1);
+    }
+    .car-card-cl .img-wrap {
+        position: relative;
+        overflow: hidden;
+        height: 200px;
+    }
+    .car-card-cl .img-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+    .car-card-cl:hover .img-wrap img { transform: scale(1.08); }
+    .car-card-cl .img-wrap .compare-cb {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 5;
+    }
+    .car-card-cl .img-wrap .compare-cb label {
+        background: rgba(255,255,255,0.92);
+        backdrop-filter: blur(6px);
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .car-card-cl .img-wrap .compare-cb label:hover { background: #fff; }
+    .car-card-cl .img-wrap .compare-cb input { cursor: pointer; }
+    .car-card-cl .img-wrap .brand-badge-cl {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: #fff;
+        padding: 4px;
+        object-fit: contain;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+    .car-card-cl .img-wrap .avail-tag-cl {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: linear-gradient(135deg, #1cc88a, #13855c);
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(28,200,138,0.25);
+    }
+    .car-card-cl .img-wrap .festival-tag-cl {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: linear-gradient(135deg, #ff6b35, #f7931e);
+        color: #fff;
+        padding: 4px 12px;
+        border-radius: 50px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(255,107,53,0.25);
+    }
+    .car-card-cl .card-body-cl {
+        padding: 18px 20px 16px;
+    }
+    .car-card-cl .card-body-cl h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0A4D3B;
+        margin: 0 0 2px;
+    }
+    .car-card-cl .card-body-cl h3 small { font-weight: 400; color: #6b7a8f; font-size: 0.85rem; }
+    .car-card-cl .card-body-cl .specs-cl {
+        display: flex;
+        gap: 14px;
+        margin: 8px 0 12px;
+        font-size: 0.8rem;
+        color: #6b7a8f;
+    }
+    .car-card-cl .card-body-cl .specs-cl span i { margin-right: 4px; color: #0A4D3B; }
+    .car-card-cl .card-body-cl .pricing-cl {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+    .car-card-cl .card-body-cl .pricing-cl .price-cl {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0A4D3B;
+    }
+    .car-card-cl .card-body-cl .pricing-cl .price-cl small { font-size: 0.8rem; font-weight: 400; color: #6b7a8f; }
+    .car-card-cl .card-body-cl .pricing-cl .old-price-cl {
+        text-decoration: line-through;
+        color: #bbb;
+        font-size: 0.85rem;
+    }
+    .car-card-cl .card-actions {
+        display: flex;
+        gap: 10px;
+        padding: 0 20px 18px;
+    }
+    .car-card-cl .card-actions .btn-rent-cl {
+        flex: 1;
+        background: linear-gradient(135deg, #0A4D3B, #063627);
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .car-card-cl .card-actions .btn-rent-cl:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(64,112,244,0.3); color: #fff; }
+    .car-card-cl .card-actions .btn-detail-cl {
+        flex: 1;
+        background: #E8F5E9;
+        color: #0A4D3B;
+        border: 2px solid transparent;
+        padding: 10px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .car-card-cl .card-actions .btn-detail-cl:hover { background: #e4ebff; color: #063627; }
+
+    .compare-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(33,37,41,0.95);
+        backdrop-filter: blur(12px);
+        color: #fff;
+        padding: 14px 24px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        z-index: 9999;
+        box-shadow: 0 -4px 30px rgba(0,0,0,0.2);
+    }
+    .compare-bar.visible { display: flex; }
+    .compare-bar .count { font-size: 0.9rem; }
+    .compare-bar .count span { font-weight: 700; color: #ffc107; }
+    .compare-bar .btn-cmp { background: linear-gradient(135deg, #ffc107, #ffb300); color: #212529; font-weight: 700; border: none; padding: 10px 28px; border-radius: 10px; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease; }
+    .compare-bar .btn-cmp:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,193,7,0.3); }
+    .compare-bar .btn-cmp:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .compare-bar .btn-cls { background: none; border: none; color: #6c757d; font-size: 1.4rem; cursor: pointer; position: absolute; right: 16px; transition: color 0.3s ease; }
+    .compare-bar .btn-cls:hover { color: #fff; }
+
+    .empty-state-cl {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6b7a8f;
+    }
+    .empty-state-cl i { font-size: 3rem; opacity: 0.3; margin-bottom: 12px; }
+    .empty-state-cl h4 { font-weight: 600; color: #333; }
+</style>
+
+<div class="carlist-hero">
+    <div class="container">
+        <h1><i class="fa fa-car mr-2"></i>Our Fleet</h1>
+        <p>Browse our collection of quality vehicles</p>
+    </div>
+</div>
+
+<div class="container" style="margin-top:0;">
+    <div class="filter-bar">
+        <div class="filter-inner">
+            <select onchange="filterByBrand(this.value)">
+                <option value="">All Brands</option>
+                @foreach (var brand in Model.CarBrands)
+                {
+                    <option value="@brand.Id">@brand.BrandName</option>
+                }
+            </select>
+            <form method="get" asp-controller="Home" asp-action="CarList" class="search-wrap" style="flex:2;min-width:200px;position:relative;">
+                <input type="text" name="search" placeholder="Search by car name or year..." value="@Context.Request.Query["search"]" />
+                <button type="submit"><i class="fa fa-search"></i></button>
+            </form>
+        </div>
+    </div>
+
+    @if (hasFestival)
+    {
+        <div class="text-center mb-4">
+            <span style="display:inline-block; background:linear-gradient(90deg,#ff6b35,#f7931e); color:#fff; padding:10px 28px; border-radius:50px; font-weight:700; font-size:0.95rem; box-shadow:0 4px 15px rgba(255,107,53,0.35);">
+                <i class="fa fa-star"></i> @Model.ActiveFestivalName Active — @Model.FestivalMultiplier.ToString("F2")× Price Applied!
+            </span>
+        </div>
+    }
+
+    @if (Model.Car.Any())
+    {
+        <div class="car-grid">
+            @foreach (var item in Model.Car)
+            {
+                var displayPrice = (int)Math.Round(item.Price * (double)festivalMultiplier);
+                <div class="car-card-cl">
+                    <div class="img-wrap">
+                        <div class="compare-cb">
+                            <label><input type="checkbox" class="car-compare-cb" value="@item.Id" onchange="updateCompareBar()" /> <i class="fa fa-balance-scale"></i> Compare</label>
+                        </div>
+                        @if (item.CarBrand != null)
+                        {
+                            <img src="~/images/@item.CarBrand.PhotoUrl" alt="Brand" class="brand-badge-cl" />
+                        }
+                        @if (item.IsCarBooked == false || item.IsCarBooked == null)
+                        {
+                            <span class="avail-tag-cl"><i class="fa fa-check-circle"></i> Available (@item.AvailableCarCount)</span>
+                        }
+                        @if (hasFestival)
+                        {
+                            <span class="festival-tag-cl"><i class="fa fa-fire"></i> Festival Price</span>
+                        }
+                        <img src="@Url.Content("~/images/" + item.PhotoUrl)" alt="@item.ModelName" />
+                    </div>
+                    <div class="card-body-cl">
+                        <h3>@item.ModelName <small>- @item.CarBrand?.BrandName</small></h3>
+                        <div class="specs-cl">
+                            <span><i class="fa fa-user"></i> @item.TotalSeats seats</span>
+                            <span><i class="fa fa-calendar"></i> @item.ModelYear</span>
+                            <span><i class="fa fa-car"></i> @item.EngineType</span>
+                        </div>
+                        <div class="pricing-cl">
+                            @if (hasFestival)
+                            {
+                                <span class="old-price-cl">Rs. @item.Price</span>
+                                <span class="price-cl" style="color:#ff6b35;">Rs. @displayPrice <small>/ Day</small></span>
+                            }
+                            else
+                            {
+                                <span class="price-cl">Rs. @item.Price <small>/ Day</small></span>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <a asp-controller="Home" asp-action="BeforeKhalti" asp-route-carId="@item.Id" class="btn-rent-cl"><i class="fa fa-shopping-cart"></i> Rent Now</a>
+                        <a asp-controller="Home" asp-action="CarDetails" asp-route-id="@item.Id" class="btn-detail-cl"><i class="fa fa-eye"></i> Details</a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state-cl">
+            <i class="fa fa-car"></i>
+            <h4>No cars found</h4>
+            <p>Try adjusting your search or filter criteria</p>
+        </div>
+    }
+</div>
+
+<div class="compare-bar" id="compareBar">
+    <span class="count"><i class="fa fa-balance-scale mr-1"></i> <span id="compareCount">0</span> car(s) selected (max 3)</span>
+    <button class="btn-cmp" id="btnCompare" disabled onclick="goCompare()"><i class="fa fa-arrows-alt-h"></i> Compare</button>
+    <button class="btn-cls" onclick="clearCompare()">&times;</button>
+</div>
+
+<script>
+    function filterByBrand(brandId) {
+        if (brandId) {
+            window.location.href = '@Url.Action("AllFilterCarList", "Home")?brandId=' + brandId;
+        } else {
+            window.location.href = '@Url.Action("CarList", "Home")';
+        }
+    }
+    function updateCompareBar() {
+        var cbs = document.querySelectorAll('.car-compare-cb:checked');
+        var count = cbs.length;
+        document.getElementById('compareCount').textContent = count;
+        var bar = document.getElementById('compareBar');
+        var btn = document.getElementById('btnCompare');
+        if (count > 0) {
+            bar.classList.add('visible');
+            btn.disabled = count < 2 || count > 3;
+        } else {
+            bar.classList.remove('visible');
+        }
+        if (count > 3) {
+            cbs[3].checked = false;
+            updateCompareBar();
+        }
+    }
+    function goCompare() {
+        var cbs = document.querySelectorAll('.car-compare-cb:checked');
+        var ids = Array.from(cbs).map(function(cb) { return cb.value; });
+        window.location.href = '/Home/Compare?' + ids.map(function(id) { return 'ids=' + id; }).join('&');
+    }
+    function clearCompare() {
+        document.querySelectorAll('.car-compare-cb:checked').forEach(function(cb) { cb.checked = false; });
+        updateCompareBar();
+    }
+</script>

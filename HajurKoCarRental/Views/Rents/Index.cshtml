@@ -1,0 +1,176 @@
+@model IEnumerable<HajurKoCarRental.Models.Rent>
+@using Microsoft.AspNetCore.Http
+@using System.Security.Claims
+
+@{
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    ViewData["Title"] = "Rent Requests";
+    <style>
+    .badge {
+        display: inline-block;
+        padding: 0.25em 0.5em;
+        font-size: 0.9em;
+        font-weight: bold;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        background-color: green;
+        color: white;
+    }
+    .badge-pending{
+            background-color: red;
+    }
+    .rental-table td, .rental-table th {
+        white-space: nowrap;
+    }
+    .rental-table td img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+    }
+    </style>
+}
+
+
+<div class="card">
+    <div class="card-header">
+        <h2>Rental Requests</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table rental-table">
+                <thead>
+                    <tr>
+                        <th>Car Model</th>
+                        <th>Car Number</th>
+                        <th>Car Photo</th>
+                        <th>User</th>
+                        <th>Phone No.</th>
+                        <th>Pickup Branch</th>
+                        <th>Payment Method</th>
+                        <th>Total Amount</th>
+                        <th>Advance Payment</th>
+                        <th>Pay at Return</th>
+                        <th>Duration</th>
+                        <th>Verified Status</th>
+                        <th>Rented Date</th>
+                        <th>Operations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="14" class="text-center py-4">
+                                <i class="fa fa-car fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No rental requests found.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Car.ModelName</td>
+                                <td>@item.Car.CarNumber</td>
+                                <td>
+                                    <img src="@Url.Content("~/images/" + item.Car.PhotoUrl)" alt="Image" width="100" height="100" />
+                                </td>
+                                <td>@item.User.UserName</td>
+                                <td>@item.User.PhoneNumber</td>
+                                <td>@(item.PickupBranch?.Name ?? "-")</td>
+                                <td>@item.PaymentMethod</td>
+                                <td>Rs. @item.Amount</td>
+                                <td>Rs. @item.AdvancePaid</td>
+                                <td>
+                                    @if (item.RemainingAmount > 0)
+                                    {
+                                        <span style="color:#e74a3b;font-weight:600;">Rs. @item.RemainingAmount</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#1cc88a;">Paid</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Duration > 0 && item.Hours > 0)
+                                    {
+                                        <text>@item.Duration d @item.Hours hr</text>
+                                    }
+                                    else if (item.Duration > 0)
+                                    {
+                                        <text>@item.Duration day(s)</text>
+                                    }
+                                    else
+                                    {
+                                        <text>@item.Hours hr</text>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Status == "Approved")
+                                    {
+                                        <span class="badge">Approved</span>
+                                    }
+                                    else if (item.Status == "Rejected")
+                                    {
+                                        <span class="badge" style="background-color: #6c757d;">Rejected</span>
+                                    }
+                                    else if (item.Status == "Removed")
+                                    {
+                                        <span class="badge" style="background-color: #495057;">Removed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-pending">Pending</span>
+                                    }
+                                </td>
+                                <td>@item.RentalDate</td>
+                                <td>
+                                    <a class="btn btn-sm btn-info mb-1" asp-action="Details" asp-route-id="@item.Id">Detail</a>
+
+                                    @if (item.Status == "Rejected")
+                                    {
+                                        <span class="text-secondary font-weight-bold">Rejected</span>
+                                    }
+                                    else if (item.Status == "Removed")
+                                    {
+                                        <span class="text-secondary font-weight-bold">Removed</span>
+                                    }
+                                    else if (item.Status == "Approved")
+                                    {
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Id">Remove</a>
+                                        }
+                                        else if (item.UserId == userId)
+                                        {
+                                            <a class="btn btn-info" asp-controller="DamageRequest" asp-action="Create" asp-route-carId="@item.Car.Id">Submit Damage</a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            @if (item.UserId != userId)
+                                            {
+                                                <a class="btn btn-primary" asp-action="Edit" asp-route-id="@item.Id">Approve</a> <span>|</span>
+                                            }
+                                            <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Id">Remove</a>
+                                        }
+                                        else if (item.UserId == userId)
+                                        {
+                                            <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.Id">Remove</a>
+                                        }
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+@model IEnumerable<HajurKoCarRental.Models.LateFee>
+
+@{
+    ViewData["Title"] = "My Late Fees";
+}
+
+<h1>My Late Fees</h1>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Car Model</th>
+            <th>Amount</th>
+            <th>Hours Late</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@(item.Car?.ModelName ?? "-")</td>
+                <td>Rs. @item.Amount</td>
+                <td>
+                    @{
+                        var lateDays = (int)(item.HoursLate / 24);
+                        var lateHours = (int)(item.HoursLate % 24);
+                        if (lateDays > 0)
+                        {
+                            <text>@lateDays days, @lateHours hrs</text>
+                        }
+                        else
+                        {
+                            <text>@lateHours hrs</text>
+                        }
+                    }
+                </td>
+                <td>
+                    @if (item.Status == "Unpaid")
+                    {
+                        <span class="badge" style="background-color:red;color:white;">Unpaid</span>
+                    }
+                    else
+                    {
+                        <span class="badge" style="background-color:green;color:white;">Paid</span>
+                    }
+                </td>
+                <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+            </tr>
+        }
+        @if (!Model.Any())
+        {
+            <tr>
+                <td colspan="5" class="text-center text-muted">No late fees.</td>
+            </tr>
+        }
+    </tbody>
+</table>

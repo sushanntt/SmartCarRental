@@ -1,0 +1,488 @@
+@using Microsoft.AspNetCore.Identity
+@using HajurKoCarRental.Areas.Identity.Data
+@using HajurKoCarRental.Services
+@inject SignInManager<HajurKoCarRentalUser> SignInManager
+@inject UserManager<HajurKoCarRentalUser> _userManager
+@inject NotificationBadgeService _notificationBadgeService
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:;">
+    <title>@ViewData["Title"] - Smart Car Rental</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Home.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/HajurKoCarRental.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.0/css/line.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" />
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/alertify.min.css" />
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/css/themes/default.min.css" />
+    <style>
+        .dropdown-content a {
+            float: none;
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            font-weight: bold;
+            display: block;
+            text-align: left;
+            background-color: #A8D5BA;
+        }
+
+        .dropdown-content a:hover {
+            background-color: white;
+        }
+
+        .nav-item a:hover {
+            background-color: white;
+        }
+
+        .nav-item {
+            font-weight: bold;
+        }
+
+        .nav-item li.active a {
+            background-color: green;
+        }
+    </style>
+
+</head>
+<body style="background-color: #E8F5E9;">
+
+    @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+    {
+        var adminNotifications = await _notificationBadgeService.GetAdminCountsAsync(_userManager.GetUserId(User));
+        <div class="sidebar">
+            <div class="logo-details" style="margin-top:-0.5cm;">
+                <i class='b-font bx-sm'></i>
+                <span class="logo_name">Admin Panel</span>
+            </div>
+            <ul class="nav-links" style="margin-top:-0.7cm;">
+                <li>
+                    <a asp-area="" asp-controller="Analytics" asp-action="Index">
+                        <i class="fa fa-chart-pie"></i>
+                        <span class="links_name">Analytics</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Users" asp-action="Index">
+                        <i class="fa fa-users"></i>
+                        <span class="links_name">Users</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="CarBrands" asp-action="Index">
+                        <i class="fa fa-business-time"></i>
+                        <span class="links_name">Car Brand</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Cars" asp-action="Index">
+                        <i class="fa fa-car"></i>
+                        <span class="links_name">Car</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Offer" asp-action="Index">
+                        <i class="fa fa-gift"></i>
+                        <span class="links_name">Offers</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Festival" asp-action="Index">
+                        <i class="fa fa-calendar"></i>
+                        <span class="links_name">Festivals</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Branches" asp-action="Index">
+                        <i class="fa fa-building"></i>
+                        <span class="links_name">Branches</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Rents" asp-action="Index" style="position: relative;">
+                        <i class="fa fa-cart-plus"></i>
+                        <span class="links_name">Rent Request</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.RentalRequest)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Offer" asp-action="OfferRequest" style="position: relative;">
+                        <i class="fa fa-cart-plus"></i>
+                        <span class="links_name">Offer Rent Request</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.OfferRentRequest)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="RentalHistory" asp-action="Index">
+                        <i class="fa fa-truck-pickup"></i>
+                        <span class="links_name">Rental History</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Rents" asp-action="RefundDetails" style="position: relative;">
+                        <i class="fa fa-credit-card"></i>
+                        <span class="links_name">Refund Details</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.RefundDetails)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Rents" asp-action="ReturnedCar" style="position: relative;">
+                        <i class="fa fa-car"></i>
+                        <span class="links_name">Return Car</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.ReturnCar)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Rents" asp-action="OverdueRentals" style="position: relative;">
+                        <i class="fa fa-clock"></i>
+                        <span class="links_name">Overdue Rentals</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.OverdueRental)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="CarsReport" asp-action="FrequentCustomer" style="position: relative;">
+                        <i class="fa fa-user"></i>
+                        <span class="links_name">Frequent Customer</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.FrequentCustomer)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="CarsReport" asp-action="InactiveCustomers">
+                        <i class="fas fa-user"></i>
+                        <span class="links_name">Inactive Customer</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="AuditLogs" asp-action="Index">
+                        <i class="fa fa-history"></i>
+                        <span class="links_name">Audit Logs</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="LateFee" asp-action="Index" style="position: relative;">
+                        <i class="fa fa-clock"></i>
+                        <span class="links_name">Late Fees</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.LateFeePending)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="ChurnReport" asp-action="Index">
+                        <i class="fa fa-chart-line"></i>
+                        <span class="links_name">Churn Prediction</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="SalesReport" asp-action="Index" style="position: relative;">
+                        <i class="fas fa-file"></i>
+                        <span class="links_name">Sales Report</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.SalesReport)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="CarsReport" asp-action="Index">
+                        <i class="fas fa-file"></i>
+                        <span class="links_name">Cars Report</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="DamageRequest" asp-action="Index" style="position: relative;">
+                        <i class="fa fa-bolt"></i>
+                        <span class="links_name">Damage Request</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.DamageRequest)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Chat" asp-action="Index" style="position: relative;">
+                        <i class="fa fa-comment"></i>
+                        <span class="links_name">Chat</span>
+                        <span id="chatSidebarBadgeWrap">@await Html.PartialAsync("_SidebarNotificationBadge", adminNotifications.ChatUnread)</span>
+                    </a>
+                </li>
+              </ul>
+        </div>
+        <section class="home-section">
+            <nav>
+                <div class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3 justify-content-end">
+                    <div class="ml-auto">
+                        <partial name="_Loginpartial" />
+                    </div>
+                </div>
+     
+            </nav>
+            <div class="home-content">
+                @RenderBody()
+            </div>
+        </section>
+    }
+    else if (SignInManager.IsSignedIn(User) && User.IsInRole("Customer"))
+    {
+        var currentUserId = _userManager.GetUserId(User);
+        var customerNotifications = !string.IsNullOrEmpty(currentUserId)
+            ? await _notificationBadgeService.GetCustomerCountsAsync(currentUserId)
+            : new SidebarNotificationCounts();
+        <div class="sidebar">
+            <div class="logo-details" style="margin-top:-0.5cm;">
+                <i class='b-font bx-sm'></i>
+                <span class="logo_name">Customer Panel</span>
+            </div>
+            <ul class="nav-links" style="margin-top:-0.7cm;">
+                <li>
+                    <a asp-area="" asp-controller="CustomerDashboard" asp-action="Index">
+                        <i class="fa fa-house-user"></i>
+                        <span class="links_name">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Home" asp-action="CarList">
+                        <i class="fa fa-car"></i>
+                        <span class="links_name">Car List</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Home" asp-action="SpecialOffers">
+                        <i class="fa fa-gift"></i>
+                        <span class="links_name">Special Offers</span>
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Rents" asp-action="Index" style="position: relative;">
+                        <i class="fa fa-cart-plus"></i>
+                        <span class="links_name">Rental Request</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", customerNotifications.RentalRequest)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Offer" asp-action="OfferRequest" style="position: relative;">
+                        <i class="fa fa-cart-plus"></i>
+                        <span class="links_name">Offer Rent Request</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", customerNotifications.OfferRentRequest)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="RentalHistory" asp-action="Index" style="position: relative;">
+                        <i class="fa fa-truck-pickup"></i>
+                        <span class="links_name">Rental History</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", customerNotifications.RentalHistory)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Rents" asp-action="RefundDetails" style="position: relative;">
+                        <i class="fa fa-credit-card"></i>
+                        <span class="links_name">Refund Details</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", customerNotifications.RefundDetails)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="DamageRequest" asp-action="Index" style="position: relative;">
+                        <i class="fa fa-bolt"></i>
+                        <span class="links_name">Damage Request</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", customerNotifications.DamageRequest)
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="LateFee" asp-action="MyFees" style="position: relative;">
+                        <i class="fa fa-clock"></i>
+                        <span class="links_name">Late Fees</span>
+                        @await Html.PartialAsync("_SidebarNotificationBadge", customerNotifications.LateFeePending)
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <section class="home-section">
+            <nav>
+                <div class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light border-bottom box-shadow mb-3 justify-content-end">
+                    <div class="ml-auto">
+                        <partial name="_Loginpartial" />
+                    </div>
+                </div>
+            </nav>
+            <div class="home-content">
+                @RenderBody()
+            </div>
+        </section>
+    }
+        else{
+       <header>
+        <style>
+            .navbar-guest {
+                background: rgba(255,255,255,0.95) !important;
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                box-shadow: 0 1px 20px rgba(0,0,0,0.06);
+                border-bottom: none !important;
+                padding: 6px 0;
+            }
+            .navbar-guest .nav-link {
+                font-weight: 500;
+                font-size: 0.9rem;
+                padding: 8px 18px !important;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+                color: #333 !important;
+            }
+            .navbar-guest .nav-link:hover {
+                background: #E8F5E9;
+                color: #0A4D3B !important;
+            }
+            .navbar-guest .navbar-brand img {
+                height: 44px;
+                transition: transform 0.3s ease;
+            }
+            .navbar-guest .navbar-brand img:hover {
+                transform: scale(1.05);
+            }
+            .navbar-guest .navbar-toggler {
+                border: none;
+                padding: 4px 8px;
+            }
+            .navbar-guest .navbar-toggler:focus {
+                box-shadow: none;
+            }
+            .navbar-guest .navbar-toggler-icon {
+                width: 22px;
+                height: 22px;
+            }
+        </style>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light fixed-top navbar-guest">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/car-rental.png" alt="Logo">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="CarList">Cars</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="About">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Contact">Contact</a>
+                        </li>
+                    </ul>
+                    <partial name="_Loginpartial" />
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container" style="margin-top: 100px">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+    
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2026 - Smart Car Rental
+        </div>
+    </footer>
+    }
+    <script src="//cdn.jsdelivr.net/npm/alertifyjs@1.13.1/build/alertify.min.js"></script>
+
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        var successMsg = TempData["SuccessMessage"].ToString().Replace("\\", "\\\\").Replace("\"", "\\\"");
+        <script>
+            alertify.set('notifier', 'position', 'top-right');
+            alertify.success("@successMsg");
+        </script>
+
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        var errorMsg = TempData["ErrorMessage"].ToString().Replace("\\", "\\\\").Replace("\"", "\\\"");
+        <script>
+            alertify.set('notifier', 'position', 'top-right');
+            alertify.error("@errorMsg");
+        </script>
+
+    }
+
+    @if (TempData["WarningMessage"] != null)
+    {
+        var warningMsg = TempData["WarningMessage"].ToString().Replace("\\", "\\\\").Replace("\"", "\\\"");
+        <script>
+            alertify.set('notifier', 'position', 'top-right');
+            alertify.warning("@warningMsg");
+        </script>
+
+    }
+    <script>
+        let sidebar = document.querySelector(".sidebar");
+        let sidebarBtn = document.querySelector(".sidebarBtn");
+        if (sidebarBtn) {
+            sidebarBtn.onclick = function () {
+                sidebar.classList.toggle("active");
+                if (sidebar.classList.contains("active")) {
+                    sidebarBtn.classList.replace("bx-menu", "bx-menu-alt-right");
+                } else
+                    sidebarBtn.classList.replace("bx-menu-alt-right", "bx-menu");
+            }
+        }
+    </script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    @await Html.PartialAsync("_ChatWidget")
+
+    @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+    {
+        var isChatPage = string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Chat", StringComparison.OrdinalIgnoreCase);
+        if (!isChatPage)
+        {
+            var adminId = _userManager.GetUserId(User);
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.15/signalr.min.js"></script>
+            <script>
+                (function() {
+                    const adminId = '@adminId';
+                    const conn = new signalR.HubConnectionBuilder()
+                        .withUrl("/chatHub")
+                        .withAutomaticReconnect()
+                        .build();
+
+                    conn.on("ReceiveMessage", function (senderId) {
+                        if (senderId !== adminId) {
+                            const wrap = document.getElementById('chatSidebarBadgeWrap');
+                            if (wrap) {
+                                let badge = wrap.querySelector('span');
+                                if (!badge) {
+                                    badge = document.createElement('span');
+                                    badge.style.cssText = 'position:absolute;right:15px;top:50%;transform:translateY(-50%);background-color:#ff3333;color:white;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;padding:0;line-height:1;z-index:100;';
+                                    wrap.appendChild(badge);
+                                }
+                                let count = parseInt(badge.textContent) || 0;
+                                count++;
+                                badge.textContent = count;
+                                badge.style.display = 'flex';
+                            }
+                        }
+                    });
+
+                    conn.start().catch(function () {});
+                })();
+            </script>
+        }
+    }
+</body>
+</html>
+
+
+

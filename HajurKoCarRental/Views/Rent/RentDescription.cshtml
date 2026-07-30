@@ -1,0 +1,558 @@
+@using static HajurKoCarRental.Controllers.RentController
+@using HajurKoCarRental.Models
+@inject HajurKoCarRental.Data.HajurKoCarRentalContext _context
+@model UserAndCar
+
+@{
+    ViewData["Title"] = "Rent Description";
+    var allBranches = _context.Branches?.ToList() ?? new List<Branch>();
+    var carBranchesDict = Model.Car?.CarBranches?.ToDictionary(cb => cb.BranchId, cb => cb.AvailableCount) ?? new Dictionary<Guid, int>();
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <style>
+        .rd-wrap { max-width: 1100px; margin: 0 auto; padding: 30px 16px; }
+        .rd-layout { display: flex; gap: 28px; align-items: flex-start; }
+        .rd-layout .rd-left { flex: 1; position: sticky; top: 20px; }
+        .rd-layout .rd-right { flex: 1.2; }
+        @@media (max-width: 900px) { .rd-layout { flex-direction: column; } .rd-layout .rd-left { position: static; } }
+        .rd-gallery {
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        }
+        .rd-gallery-img {
+            width: 100%;
+            object-fit: contain;
+            display: block;
+            transition: transform 0.5s ease;
+            background: #f5f5f5;
+        }
+        .rd-gallery-img:hover { transform: scale(1.03); }
+        .rd-gallery-body { padding: 20px 24px 24px; }
+        .rd-gallery-body h4 { font-weight: 700; color: #1a1a2e; margin: 0 0 4px; font-size: 1.3rem; }
+        .rd-gallery-body .rd-meta { color: #6b7a8f; font-size: 0.85rem; margin-bottom: 10px; }
+        .rd-gallery-body .rd-meta i { width: 18px; color: #0A4D3B; }
+        .rd-gallery-body p { color: #444; font-size: 0.9rem; line-height: 1.6; margin: 0; }
+        .rd-brand-stamp {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #E8F5E9; color: #0A4D3B; padding: 4px 14px;
+            border-radius: 50px; font-size: 0.75rem; font-weight: 600; margin-top: 10px;
+        }
+        .rd-right-inner { display: flex; flex-direction: column; gap: 20px; }
+        .rd-panel {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .rd-panel-header {
+            padding: 16px 24px;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1a1a2e;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .rd-panel-header i { color: #0A4D3B; font-size: 1.1rem; }
+        .rd-panel-body { padding: 20px 24px 24px; }
+        .rd-price-big {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #0A4D3B, #1a6e54);
+            border-radius: 16px;
+            color: #fff;
+        }
+        .rd-price-big .rd-amount { font-size: 2.4rem; font-weight: 800; line-height: 1; }
+        .rd-price-big .rd-amount small { font-size: 1rem; font-weight: 400; opacity: 0.7; }
+        .rd-price-big .rd-original { text-decoration: line-through; opacity: 0.6; font-size: 0.9rem; }
+        .rd-price-big .rd-total-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-top: 2px; }
+        .rd-badge-festival {
+            display: inline-block; background: rgba(255,255,255,0.15); padding: 3px 12px;
+            border-radius: 50px; font-size: 0.7rem; margin-bottom: 8px;
+        }
+        .rd-price-big.regular .rd-amount { font-size: 2rem; }
+        .rd-form-group { margin-bottom: 16px; }
+        .rd-form-group label { font-size: 0.8rem; font-weight: 600; color: #444; margin-bottom: 4px; display: block; }
+        .rd-form-group .form-control {
+            border: 2px solid #e8ecf4; border-radius: 12px; padding: 10px 14px;
+            font-size: 0.9rem; transition: border-color 0.2s ease;
+        }
+        .rd-form-group .form-control:focus { border-color: #0A4D3B; box-shadow: 0 0 0 3px rgba(10,77,59,0.1); }
+        .rd-pay-cards { display: flex; gap: 10px; }
+        .rd-pay-card {
+            flex: 1; padding: 14px 10px; border: 2px solid #e8ecf4; border-radius: 14px;
+            cursor: pointer; text-align: center; transition: all 0.2s ease;
+        }
+        .rd-pay-card:hover { border-color: #b0d4c4; }
+        .rd-pay-card.selected { border-color: #0A4D3B; background: #E8F5E9; }
+        .rd-pay-card input { display: none; }
+        .rd-pay-card .rd-pay-icon { font-size: 1.6rem; margin-bottom: 4px; }
+        .rd-pay-card .rd-pay-label { font-size: 0.75rem; font-weight: 600; color: #444; }
+        .rd-pay-card.selected .rd-pay-label { color: #0A4D3B; }
+        .rd-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .rd-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+        .rd-map-wrap { border-radius: 14px; overflow: hidden; border: 2px solid #e8ecf4; }
+        .rd-map-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #e8ecf4;
+        }
+        .rd-map-bar button {
+            background: none; border: 1px solid #0A4D3B; color: #0A4D3B;
+            border-radius: 8px; padding: 5px 14px; font-size: 0.75rem; font-weight: 600;
+            transition: all 0.2s ease; cursor: pointer;
+        }
+        .rd-map-bar button:hover { background: #0A4D3B; color: #fff; }
+        .rd-branch-card {
+            background: #E8F5E9; border-radius: 14px; padding: 14px 18px;
+            border: 1px solid #C8E6C9; margin-top: 10px; display: none;
+        }
+        .rd-branch-card h6 { color: #0A4D3B; font-weight: 700; margin: 0 0 4px; font-size: 0.9rem; }
+        .rd-branch-card p { margin: 0; font-size: 0.8rem; color: #555; }
+        .rd-branch-card .badge-nearest { background: #0A4D3B; color: #ffd700; font-size: 0.65rem; padding: 2px 10px; border-radius: 50px; margin-right: 6px; }
+        .rd-submit-wrap { margin-top: 4px; }
+        .rd-btn-final {
+            width: 100%; padding: 16px; font-size: 1.1rem; font-weight: 700;
+            border-radius: 14px; background: linear-gradient(135deg, #0A4D3B, #063627);
+            border: none; color: #fff; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .rd-btn-final:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(10,77,59,0.35); }
+        .rd-btn-final:active { transform: translateY(0); }
+    </style>
+    var a = "";
+}
+
+<div class="rd-wrap">
+    <div class="rd-layout">
+        <div class="rd-left">
+            <div class="rd-gallery">
+                <img src="~/images/@Model.Car.PhotoUrl" alt="@Model.Car.ModelName" class="rd-gallery-img">
+                <div class="rd-gallery-body">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>@Model.Car.ModelName</h4>
+                    </div>
+                    <div class="rd-meta">
+                        <i class="fas fa-tag"></i> @Model.Car.CarBrand?.BrandName
+                    </div>
+                    <p>@Model.Car.CarDescription</p>
+                    @if (Model.Car.CarBrand?.PhotoUrl != null)
+                    {
+                        <span class="rd-brand-stamp"><i class="fas fa-check-circle"></i> @Model.Car.CarBrand.BrandName</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="rd-right">
+            <div class="rd-right-inner">
+                @{
+                    var basePrice = (int)Math.Round(Model.Car.Price * (double)Model.FestivalMultiplier);
+                }
+                <div class="rd-panel">
+                    <div class="rd-price-big regular">
+                        @if (Model.FestivalMultiplier > 1.0m)
+                        {
+                            <div class="rd-badge-festival"><i class="fas fa-fire" style="color:#ffd700;"></i> @Model.ActiveFestivalName</div>
+                        }
+                        <div class="rd-amount">Rs. @basePrice <small>/day</small></div>
+                        <div class="rd-total-label">Car daily rate</div>
+                        <div id="estimatedTotal" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #eee;">
+                            <div style="font-size:0.8rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;">Estimated Total</div>
+                            <div style="font-size:1.8rem;font-weight:800;color:#ffffff;">Rs. <span id="estimatedAmount">0</span></div>
+                            <div id="advanceBreakdown" style="display:none;font-size:0.85rem;margin-top:6px;padding:8px 10px;border-radius:6px;background:rgba(255,255,255,0.1);">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                                    <span style="opacity:0.8;">Advance Payment (50%):</span>
+                                    <span style="font-weight:600;">Rs. <span id="advanceAmount">0</span></span>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;">
+                                    <span style="opacity:0.8;">Pay at Return:</span>
+                                    <span style="font-weight:600;">Rs. <span id="remainingAmount">0</span></span>
+                                </div>
+                            </div>
+                            <div id="discountLabel" style="font-size:0.85rem;color:#ffd700;display:none;"></div>
+                            <div id="hourlyPriceDisplay" style="font-size:0.85rem;opacity:0.7;display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-panel">
+                    <div class="rd-panel-header"><i class="fas fa-credit-card"></i> Payment Method</div>
+                    <div class="rd-panel-body">
+                        <div class="rd-pay-cards">
+                            <div class="rd-pay-card selected" onclick="selectPayment(this,'khalti')">
+                                <input type="radio" value="khalti" id="khaltiRadio" name="paymentOption" checked>
+                                <div class="rd-pay-icon"><img src="~/images/khalti-logo.png" alt="Khalti" style="height:30px;"></div>
+                                <div class="rd-pay-label">Khalti</div>
+                            </div>
+                            <div class="rd-pay-card" onclick="selectPayment(this,'cashOnDelivery')">
+                                <input type="radio" value="cashOnDelivery" id="codRadio" name="paymentOption">
+                                <div class="rd-pay-icon"><i class="fas fa-money-bill-wave" style="color:#28a745;font-size:1.6rem;"></i></div>
+                                <div class="rd-pay-label">Pay at Branch</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-panel">
+                    <div class="rd-panel-header"><i class="fas fa-calendar-alt"></i> Rental Period</div>
+                    <div class="rd-panel-body">
+                        <div class="rd-row-3">
+                            <div class="rd-form-group">
+                                <label>Start Date & Time</label>
+                                <input type="text" id="rentalStart" name="rentalStart" class="form-control" placeholder="Select date & time" required readonly>
+                            </div>
+                            <div class="rd-form-group">
+                                <label>Days</label>
+                                <input type="number" id="duration" name="duration" class="form-control" min="0" max="30" value="1">
+                            </div>
+                            <div class="rd-form-group">
+                                <label>Hours</label>
+                                <select id="hours" name="hours" class="form-control">
+                                    @for (int h = 0; h <= 23; h++)
+                                    {
+                                        <option value="@h">@h hr</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-panel">
+                    <div class="rd-panel-header"><i class="fas fa-map-marker-alt"></i> Pickup Location</div>
+                    <div class="rd-panel-body">
+                        <div class="rd-map-wrap">
+                            <div class="rd-map-bar">
+                                <small style="color:#888;"><i class="fas fa-info-circle me-1"></i>Click map or use location</small>
+                                <button onclick="getUserLocation()"><i class="fas fa-location-dot me-1"></i>Use My Location</button>
+                            </div>
+                            <div id="userMap" style="height: 220px;"></div>
+                        </div>
+                        <input type="hidden" id="pickupBranch" name="pickupBranch" value="" />
+                        <input type="hidden" id="pickupLat" name="pickupLat" value="" />
+                        <input type="hidden" id="pickupLng" name="pickupLng" value="" />
+                        <div id="nearestBranchInfo" class="rd-branch-card">
+                            <h6><span class="badge-nearest">ASSIGNED</span> <span id="nearestBranchName"></span></h6>
+                            <p><i class="fas fa-phone me-1"></i> <span id="nearestBranchContact"></span> &middot; <i class="fas fa-car me-1"></i> <span id="nearestBranchAvail"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-panel">
+                    <div class="rd-panel-header"><i class="fas fa-tag"></i> Discount Code</div>
+                    <div class="rd-panel-body">
+                        <div class="rd-form-group" style="margin:0;">
+                            <input type="text" id="discountCode" name="discountCode" class="form-control" placeholder="Enter discount code (optional)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rd-submit-wrap">
+                    <button type="submit" class="rd-btn-final" onclick="redirect()">Rent Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        flatpickr("#rentalStart", {
+            enableTime: true,
+            dateFormat: "Y-m-d\\TH:i",
+            altInput: true,
+            altFormat: "M j, Y h:i K",
+            minDate: "today",
+            disable: [function(date) { return date < new Date(); }],
+            onChange: function(selectedDates, dateStr) {
+                if (selectedDates.length && selectedDates[0] < new Date(new Date().toDateString())) {
+                    this.clear();
+                    alert("You cannot select a past date and time.");
+                }
+            }
+        });
+
+        function selectPayment(el, val) {
+            document.querySelectorAll('.rd-pay-card').forEach(function(c) { c.classList.remove('selected'); });
+            el.classList.add('selected');
+            document.getElementById(val === 'khalti' ? 'khaltiRadio' : 'codRadio').checked = true;
+        }
+        if (document.getElementById('khaltiRadio')) document.getElementById('khaltiRadio').checked = true;
+        // Branch data from server
+        var branchData = [
+            @foreach (var branch in allBranches)
+            {
+                var isAvail = carBranchesDict.ContainsKey(branch.Id) && carBranchesDict[branch.Id] > 0;
+                <text>
+                {
+                    id: '@branch.Id',
+                    lat: @(branch.Latitude?.ToString("F6") ?? "0"),
+                    lng: @(branch.Longitude?.ToString("F6") ?? "0"),
+                    name: '@Html.Raw(branch.Name)',
+                    contact: '@Html.Raw((branch.Contact ?? "").Replace("'", "\\'"))',
+                    avail: @(isAvail ? carBranchesDict[branch.Id].ToString() : "0"),
+                    latVal: @(branch.Latitude?.ToString("F6") ?? "null"),
+                    lngVal: @(branch.Longitude?.ToString("F6") ?? "null")
+                },
+                </text>
+            }
+        ].filter(function(b) { return b.latVal !== null && b.lngVal !== null; });
+
+    </script>
+    <script>
+        const pricePerDay = @basePrice;
+
+        function getHoursCost(h) {
+            h = parseInt(h) || 0;
+            if (h <= 0) return 0;
+            if (h === 1) return pricePerDay * 0.20;
+            if (h === 2) return pricePerDay * 0.25;
+            if (h === 3) return pricePerDay * 0.30;
+            if (h === 4) return pricePerDay * 0.35;
+            if (h === 5) return pricePerDay * 0.40;
+            if (h === 6) return pricePerDay * 0.45;
+            if (h === 7) return pricePerDay * 0.50;
+            return pricePerDay;
+        }
+
+        function updatePricing() {
+            var d = parseInt(document.getElementById("duration").value) || 0;
+            var h = parseInt(document.getElementById("hours").value) || 0;
+            if (d < 0) { document.getElementById("duration").value = 0; d = 0; }
+            if (d > 30) { alert("You can only rent for a maximum of 30 days."); document.getElementById("duration").value = 30; d = 30; }
+
+            var est = document.getElementById("estimatedTotal");
+            if (d === 0 && h === 0) {
+                est.style.display = 'none';
+                return;
+            }
+            est.style.display = 'block';
+
+            var total = (pricePerDay * d) + getHoursCost(h);
+            document.getElementById("estimatedAmount").innerText = Math.round(total);
+
+            var ab = document.getElementById("advanceBreakdown");
+            ab.style.display = 'block';
+            document.getElementById("advanceAmount").innerText = Math.round(total * 0.5);
+            document.getElementById("remainingAmount").innerText = Math.round(total - total * 0.5);
+
+            var lbl = document.getElementById("discountLabel");
+            if (d >= 21) {
+                lbl.style.display = 'block';
+                lbl.innerText = '15% long-term discount applies';
+            } else if (d >= 11) {
+                lbl.style.display = 'block';
+                lbl.innerText = '10% long-term discount applies';
+            } else {
+                lbl.style.display = 'none';
+            }
+            var hp = document.getElementById("hourlyPriceDisplay");
+            if (h > 0 && d === 0) {
+                hp.style.display = 'block';
+                hp.innerText = h + ' hr @@ Rs. ' + Math.round(getHoursCost(h)) + ' (tier pricing)';
+            } else if (h > 0) {
+                hp.style.display = 'block';
+                hp.innerText = '+' + h + ' hr @@ Rs. ' + Math.round(getHoursCost(h));
+            } else {
+                hp.style.display = 'none';
+            }
+        }
+
+        document.getElementById("duration").addEventListener("input", updatePricing);
+        document.getElementById("hours").addEventListener("change", updatePricing);
+
+        // --- Map & Nearest Branch ---
+        var userMap = L.map('userMap').setView([27.7172, 85.3240], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(userMap);
+
+        var branchMarkers = [];
+        var userMarker = null;
+
+        function placeUserMarker(lat, lng) {
+            if (userMarker === null) {
+                userMarker = L.circleMarker([lat, lng], {
+                    radius: 10,
+                    fillColor: '#ff6b35',
+                    color: '#fff',
+                    weight: 2,
+                    fillOpacity: 0.9
+                }).addTo(userMap).bindTooltip('Your pickup location');
+            } else {
+                userMarker.setLatLng([lat, lng]);
+            }
+        }
+
+        // Add branch markers
+        branchData.forEach(function(b) {
+            var color = b.avail > 0 ? '#0A4D3B' : '#aaa';
+            var marker = L.circleMarker([b.lat, b.lng], {
+                radius: 8,
+                fillColor: color,
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 0.9
+            }).addTo(userMap);
+            marker.bindTooltip(b.name + (b.avail > 0 ? ' (' + b.avail + ' avail)' : ' (unavailable)'));
+            branchMarkers.push(marker);
+        });
+
+        // Haversine distance
+        function haversine(lat1, lon1, lat2, lon2) {
+            var R = 6371;
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLon = (lon2 - lon1) * Math.PI / 180;
+            var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function findNearestBranch(userLat, userLng) {
+            var nearest = null;
+            var minDist = Infinity;
+            branchData.forEach(function(b) {
+                if (b.avail > 0) {
+                    var dist = haversine(userLat, userLng, b.lat, b.lng);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = b;
+                    }
+                }
+            });
+            return nearest;
+        }
+
+        function updateNearestUI(nearest, userLat, userLng) {
+            if (nearest) {
+                document.getElementById('nearestBranchInfo').style.display = 'block';
+                document.getElementById('nearestBranchName').innerText = nearest.name;
+                document.getElementById('nearestBranchContact').innerText = nearest.contact || 'Contact not set';
+                document.getElementById('nearestBranchAvail').innerText = nearest.avail + ' car(s) available';
+
+                var distKm = haversine(userLat, userLng, nearest.lat, nearest.lng);
+                document.getElementById('nearestBranchName').innerText += ' (' + distKm.toFixed(1) + ' km)';
+
+                // Auto-select branch
+                document.getElementById('pickupBranch').value = nearest.id;
+
+                // Highlight nearest branch marker
+                branchMarkers.forEach(function(m) { m.setRadius(8); m.setStyle({ fillColor: '#0A4D3B' }); });
+                var nearestIdx = branchData.indexOf(nearest);
+                if (nearestIdx >= 0 && branchMarkers[nearestIdx]) {
+                    branchMarkers[nearestIdx].setRadius(12);
+                    branchMarkers[nearestIdx].setStyle({ fillColor: '#ffd700' });
+                }
+            }
+        }
+
+        // User clicks on map — save coords, place marker, and auto-assign nearest branch
+        userMap.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            document.getElementById('pickupLat').value = lat.toFixed(6);
+            document.getElementById('pickupLng').value = lng.toFixed(6);
+            placeUserMarker(lat, lng);
+            var nearest = findNearestBranch(lat, lng);
+            updateNearestUI(nearest, lat, lng);
+        });
+
+        // Browser geolocation — save coords, place marker, and auto-assign nearest branch
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    var lat = pos.coords.latitude;
+                    var lng = pos.coords.longitude;
+                    document.getElementById('pickupLat').value = lat.toFixed(6);
+                    document.getElementById('pickupLng').value = lng.toFixed(6);
+                    userMap.setView([lat, lng], 14);
+                    placeUserMarker(lat, lng);
+                    var nearest = findNearestBranch(lat, lng);
+                    updateNearestUI(nearest, lat, lng);
+                }, function() {
+                    alert('Could not get your location. Please click on the map instead.');
+                });
+            } else {
+                alert('Geolocation is not supported. Please click on the map to set your location.');
+            }
+        }
+
+        // Auto-detect location on page load
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                var lat = pos.coords.latitude;
+                var lng = pos.coords.longitude;
+                document.getElementById('pickupLat').value = lat.toFixed(6);
+                document.getElementById('pickupLng').value = lng.toFixed(6);
+                userMap.setView([lat, lng], 14);
+                placeUserMarker(lat, lng);
+                var nearest = findNearestBranch(lat, lng);
+                if (nearest) updateNearestUI(nearest, lat, lng);
+            });
+        }
+
+        // --- End Map ---
+
+        function redirect() {
+            const rentalStart = document.getElementById("rentalStart").value;
+            const duration = document.getElementById("duration").value || 0;
+            const hours = document.getElementById("hours").value || 0;
+
+            if (!rentalStart) {
+                alert("Please select a Rental Date and Time.");
+                return;
+            }
+
+            if (new Date(rentalStart) < new Date(new Date().toDateString())) {
+                alert("You cannot rent a car for a past date and time.");
+                return;
+            }
+
+            const dVal = parseInt(duration) || 0;
+            const hVal = parseInt(hours) || 0;
+            const totalHours = dVal * 24 + hVal;
+            if (totalHours < 1 || totalHours > 720) {
+                alert("Total rental time must be between 1 hour and 30 days.");
+                return;
+            }
+
+            var carId = '@Model.Car.Id';
+            var discountCode = document.getElementById('discountCode') ? document.getElementById('discountCode').value.trim() : '';
+            var pickupBranch = document.getElementById('pickupBranch') ? document.getElementById('pickupBranch').value : '';
+            var pickupLat = document.getElementById('pickupLat') ? document.getElementById('pickupLat').value : '';
+            var pickupLng = document.getElementById('pickupLng') ? document.getElementById('pickupLng').value : '';
+
+            if (!pickupBranch) {
+                alert("Please select a pickup branch.");
+                return;
+            }
+
+            var coords = '&pickupLat=' + encodeURIComponent(pickupLat) + '&pickupLng=' + encodeURIComponent(pickupLng);
+
+            var hoursParam = '&hours=' + hours;
+
+            if (document.getElementById('khaltiRadio').checked) {
+                window.location.href = '/Rent/KhaltiPayment?carId=' + carId
+                    + '&rentalStart=' + encodeURIComponent(rentalStart)
+                    + '&duration=' + duration + hoursParam
+                    + (discountCode ? '&discountCode=' + encodeURIComponent(discountCode) : '')
+                    + '&pickupBranch=' + encodeURIComponent(pickupBranch) + coords;
+            } else if (document.getElementById('codRadio').checked) {
+                window.location.href = '/Rent/SubmitRequest?carId=' + carId
+                    + '&rentalStart=' + encodeURIComponent(rentalStart)
+                    + '&duration=' + duration + hoursParam
+                    + (discountCode ? '&discountCode=' + encodeURIComponent(discountCode) : '')
+                    + '&pickupBranch=' + encodeURIComponent(pickupBranch) + coords;
+            } else {
+                alert("Please select a payment option.");
+            }
+        }
+    </script>
+}

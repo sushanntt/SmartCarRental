@@ -1,0 +1,41 @@
+@model IEnumerable<HajurKoCarRental.Models.CarBrand>
+
+@{
+    ViewData["Title"] = "Car Brands";
+}
+
+<h1>View Car Brands</h1>
+
+<p style="float:right;margin-right:2rem;">
+    <a asp-action="Create" class="btn btn-primary">Add New Car Brand</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.BrandName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PhotoUrl)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.BrandName)
+            </td>
+            <td>
+                <img src="@Url.Content("~/images/" + item.PhotoUrl)" alt="Image" style="width: 10%" />
+            </td>
+        <td>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

@@ -1,0 +1,70 @@
+@model IEnumerable<HajurKoCarRental.Models.AuditLog>
+
+@{
+    ViewData["Title"] = "Audit Logs";
+    <style>
+        .rental-table td, .rental-table th {
+            white-space: nowrap;
+        }
+        .badge-action {
+            display: inline-block;
+            padding: 0.25em 0.5em;
+            font-size: 0.85em;
+            font-weight: bold;
+            border-radius: 0.25rem;
+            color: white;
+        }
+        .badge-approved { background-color: #28a745; }
+        .badge-rejected { background-color: #dc3545; }
+        .badge-removed { background-color: #dc3545; }
+        .badge-cancelled { background-color: #ffc107; color: #333; }
+        .badge-returned { background-color: #2D8A6E; }
+    </style>
+}
+
+<div class="card">
+    <div class="card-header">
+        <h2>Audit Logs</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table rental-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Type</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-4">
+                                <i class="fa fa-history fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No audit logs yet.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Timestamp.ToString("MMM dd, yyyy h:mm tt")</td>
+                                <td>@item.User?.Email</td>
+                                <td>
+                                    <span class="badge-action badge-@item.Action.ToLower()">@item.Action</span>
+                                </td>
+                                <td>@item.EntityType</td>
+                                <td>@item.Details</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

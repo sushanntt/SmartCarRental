@@ -1,0 +1,111 @@
+@using HajurKoCarRental.Areas.Identity.Data
+@model HajurKoCarRentalUser
+
+@{
+    ViewData["Title"] = "Customer Details";
+}
+
+<div class="mb-3">
+    <a asp-action="Index" class="btn btn-secondary">&larr; Back to Customers</a>
+</div>
+
+<div class="card">
+    <div class="card-header" style="background-color:#0A4D3B;color:white;">
+        <h4 class="mb-0">@Model.Firstname @Model.Lastname</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <h5>Profile Photo</h5>
+                @if (Model.ProfilePhotoUrl != null)
+                {
+                    <img src="@Url.Content("~/images/" + Model.ProfilePhotoUrl)" style="max-width:100%;max-height:250px;border-radius:8px;cursor:pointer;" onclick="openImage(this.src)" />
+                }
+                else
+                {
+                    <img src="@Url.Content("~/images/no-photos.png")" style="max-width:100%;max-height:250px;border-radius:8px;" />
+                }
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <h5>Citizenship Photo</h5>
+                @if (Model.CitizenshipPhotoUrl != null)
+                {
+                    var ext = System.IO.Path.GetExtension(Model.CitizenshipPhotoUrl)?.ToLower();
+                    if (ext == ".pdf")
+                    {
+                        <a href="@Url.Content("~/images/" + Model.CitizenshipPhotoUrl)" target="_blank" class="btn btn-primary">View PDF</a>
+                    }
+                    else
+                    {
+                        <img src="@Url.Content("~/images/" + Model.CitizenshipPhotoUrl)" style="max-width:100%;max-height:250px;border-radius:8px;cursor:pointer;" onclick="openImage(this.src)" />
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">Not uploaded</p>
+                }
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <h5>License Photo</h5>
+                @if (Model.LicencePhotoUrl != null)
+                {
+                    var ext = System.IO.Path.GetExtension(Model.LicencePhotoUrl)?.ToLower();
+                    if (ext == ".pdf")
+                    {
+                        <a href="@Url.Content("~/images/" + Model.LicencePhotoUrl)" target="_blank" class="btn btn-primary">View PDF</a>
+                    }
+                    else
+                    {
+                        <img src="@Url.Content("~/images/" + Model.LicencePhotoUrl)" style="max-width:100%;max-height:250px;border-radius:8px;cursor:pointer;" onclick="openImage(this.src)" />
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">Not uploaded</p>
+                }
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr><th>First Name</th><td>@Model.Firstname</td></tr>
+                    <tr><th>Last Name</th><td>@Model.Lastname</td></tr>
+                    <tr><th>Email</th><td>@Model.Email</td></tr>
+                    <tr><th>Phone</th><td>@Model.PhoneNumber</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-borderless">
+                    <tr><th>Address</th><td>@Model.Address</td></tr>
+                    <tr><th>Profile Complete</th><td>@(Model.IsProfileComplete == true ? "Yes" : "No")</td></tr>
+                    <tr><th>Can Book</th><td>@(Model.CanBook == true ? "Yes" : "No")</td></tr>
+                    <tr><th>Regular Customer</th><td>@(Model.RegularCustomer == true ? "Yes" : "No")</td></tr>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Image zoom modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="background:transparent;border:none;">
+            <div class="text-end mb-2">
+                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+            </div>
+            <img id="modalImage" src="" style="width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.5);" />
+        </div>
+    </div>
+</div>
+
+<script>
+    function openImage(src) {
+        document.getElementById('modalImage').src = src;
+        var modal = new bootstrap.Modal(document.getElementById('imageModal'));
+        modal.show();
+    }
+</script>

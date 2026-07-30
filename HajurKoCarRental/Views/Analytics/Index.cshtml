@@ -1,0 +1,252 @@
+@model HajurKoCarRental.Services.AnalyticsDashboardData
+@{
+    ViewData["Title"] = "Analytics Dashboard";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" />
+
+<h1><i class="fa fa-chart-pie"></i> Analytics Dashboard</h1>
+<hr />
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h6>Total Revenue</h6>
+                <h3>NPR @Model.TotalRevenue.ToString("N0")</h3>
+                <small>All time</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h6>Monthly Revenue</h6>
+                <h3>NPR @Model.MonthRevenue.ToString("N0")</h3>
+                <small>@Model.MonthRevenueLabel</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h6>Total Rentals</h6>
+                <h3>@Model.TotalRentals</h3>
+                <small>Avg NPR @Model.AvgRevenuePerRental.ToString("N0") per rental</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white" style="background-color:#6f42c1;">
+            <div class="card-body text-center">
+                <h6>Active Rentals</h6>
+                <h3>@Model.ActiveRentals</h3>
+                <small>Avg @Model.AvgDuration.ToString("0.0") days</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Revenue Trend (@DateTime.Now.Year)</strong></div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="270"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Rentals by Month</strong></div>
+            <div class="card-body">
+                <canvas id="rentalChart" height="270"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-warning text-dark">
+            <div class="card-body text-center">
+                <h6>Total Cars</h6>
+                <h3>@Model.TotalCars</h3>
+                <small>@Model.AvailableCars available</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h6>Unpaid Damages</h6>
+                <h3>NPR @Model.TotalDamageCharges.ToString("N0")</h3>
+                <small>@Model.UnpaidDamageCharges claim(s) pending</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white" style="background-color:#b86b1d;">
+            <div class="card-body text-center">
+                <h6>Refunds Paid</h6>
+                <h3>NPR @Model.TotalRefundsPaid.ToString("N0")</h3>
+                <small>@Model.ActiveOffersCount active offers</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Cars by Brand</strong></div>
+            <div class="card-body">
+                <canvas id="brandChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Most Popular Cars</strong></div>
+            <div class="card-body" style="height:300px; overflow-y:auto;">
+                <canvas id="popularChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Revenue by Payment Method</strong></div>
+            <div class="card-body">
+                <canvas id="paymentChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Customer Churn Risk</strong></div>
+            <div class="card-body">
+                <canvas id="churnChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header"><strong>Top Spending Customers</strong></div>
+            <div class="card-body" style="height:360px; overflow-y:auto;">
+                <canvas id="spendersChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const colors = ['#0A4D3B','#1cc88a','#36b9cc','#f6c23e','#e74a3b','#858796','#5a5c69','#2e59d9','#17a673','#2c9faf'];
+
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyLabels)),
+            datasets: [{
+                label: 'Revenue (NPR)',
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyRevenue)),
+                borderColor: '#0A4D3B',
+                backgroundColor: 'rgba(78,115,223,0.1)',
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    new Chart(document.getElementById('rentalChart'), {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyLabels)),
+            datasets: [{
+                label: 'Rentals',
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlyRentals)),
+                backgroundColor: '#1cc88a'
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    new Chart(document.getElementById('brandChart'), {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CarsByBrandLabels)),
+            datasets: [{
+                data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CarsByBrandData)),
+                backgroundColor: colors.slice(0, @Model.CarsByBrandLabels.Count)
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '40%' }
+    });
+
+    (function() {
+        var ctx = document.getElementById('popularChart');
+        var labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PopularCarsLabels));
+        ctx.height = Math.max(300, labels.length * 75);
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Times Rented',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PopularCarsData)),
+                    backgroundColor: '#f6c23e'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+        });
+    })();
+
+    new Chart(document.getElementById('paymentChart'), {
+        type: 'pie',
+        data: {
+            labels: ['Khalti', 'Cash'],
+            datasets: [{
+                data: [@Model.KhaltiRevenue, @Model.CashRevenue],
+                backgroundColor: ['#36b9cc', '#858796']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '40%' }
+    });
+
+    new Chart(document.getElementById('churnChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+            datasets: [{
+                data: [@Model.HighRiskCount, @Model.MediumRiskCount, @Model.LowRiskCount],
+                backgroundColor: ['#e74a3b', '#b86b1d', '#1cc88a']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '40%' }
+    });
+
+    (function() {
+        var ctx = document.getElementById('spendersChart');
+        var labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TopSpendersLabels));
+        ctx.height = Math.max(360, labels.length * 60);
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Spent (NPR)',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.TopSpendersData)),
+                    backgroundColor: '#0A4D3B'
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' }
+        });
+    })();
+</script>

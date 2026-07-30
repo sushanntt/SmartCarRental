@@ -1,0 +1,122 @@
+@using static HajurKoCarRental.Controllers.RentsController
+@model refundModel
+
+@{
+    ViewData["Title"] = "Refund Details";
+    <style>
+    .badge {
+        display: inline-block;
+        padding: 0.25em 0.5em;
+        font-size: 0.9em;
+        font-weight: bold;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        background-color: green;
+        color: white;
+    }
+    .badge-pending{
+            background-color: red;
+    }
+    </style>
+}
+
+
+<div class="card">
+    <div class="card-header">
+        <h2>Refund Details</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>User Id</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Address</th>
+                        <th>Phone Number</th>
+                        <th>Amount</th>
+                        <th>Refund Status</th>
+                        @if (User.IsInRole("Admin"))       {
+                            <th>Action</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.RefundableRent.Any())
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center py-4">
+                                <i class="fa fa-credit-card fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No refund details available.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.RefundableRent)
+                        {
+                            <tr>
+                                <td>@item.UserId</td>
+                                <td>@item.User.Firstname</td>
+                                <td>@item.User.Lastname</td>
+                                <td>@item.User.Email</td>
+                                <td>@item.User.Address</td>
+                                <td>@item.User.PhoneNumber</td>
+                                <td>@item.Amount</td>
+                                <td>
+                                    @if (item.Status == true)
+                                    {
+                                        @if (item.CustomerConfirmed)
+                                        {
+                                            <span class="badge" style="background-color:#2D8A6E;">Confirmed by Customer</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge">Paid (Awaiting Confirmation)</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-pending">Unpaid</span>
+                                    }
+                                </td>
+                                
+
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <td>
+                                        @if (item.CustomerConfirmed)
+                                        {
+                                            <span class="badge" style="background-color:#28a745;">Refund Complete</span>
+                                        }
+                                        else if (item.Status == true)
+                                        {
+                                            <span class="badge" style="background-color:#ffc107;color:#333;">Awaiting Customer</span>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn btn-primary" asp-action="Refund" asp-route-id="@item.Id">Refund</a>
+                                        }
+                                    </td>
+                                }
+                                else if (User.IsInRole("Customer") && item.Status == true && !item.CustomerConfirmed)
+                                {
+                                    <td>
+                                        <a class="btn btn-success" asp-action="ConfirmRefund" asp-route-id="@item.Id"
+                                           onclick="return confirm('Have you received the refund amount?')">Confirm Received</a>
+                                    </td>
+                                }
+                                
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

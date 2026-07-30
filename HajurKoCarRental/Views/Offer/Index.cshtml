@@ -1,0 +1,99 @@
+@model IEnumerable<HajurKoCarRental.Models.Offer>
+
+@{
+    ViewData["Title"] = "Offers";
+}
+
+<h1>Offers</h1>
+
+<p style="float:right;margin-right:2rem;">
+    <a asp-action="Create"class="btn btn-primary">Publish Offers</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.OfferTitle)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CarName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.DiscountPercentage)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Price)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ValidityPeroid)
+            </th>
+
+            <th>
+                Branches (Count)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.PhotoUrl)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Available)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@if (!Model.Any())
+{
+        <tr>
+            <td colspan="9" class="text-center py-4">
+                <i class="fa fa-tags fa-3x text-muted mb-3"></i>
+                <p class="text-muted mb-0">No offers published yet.</p>
+            </td>
+        </tr>
+}
+else
+{
+        @foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.OfferTitle)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CarName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DiscountPercentage)%
+            </td>
+            <td>
+                Rs. @Html.DisplayFor(modelItem => item.Price)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ValidityPeroid)
+            </td>
+
+            <td style="font-size:0.85rem;">
+                @if (item.OfferBranches != null && item.OfferBranches.Any())
+                {
+                    @string.Join(", ", item.OfferBranches.Select(ob => $"{ob.Branch?.Name ?? "?"} ({ob.AvailableCount})"))
+                }
+                else
+                {
+                    <span class="text-muted">Not assigned</span>
+                }
+            </td>
+            <td>
+                <img src="@Url.Content("~/images/" + item.PhotoUrl)" alt="Image" width="100" height="100" />
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Available)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-secondary">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Delete</a>
+            
+            </td>
+        </tr>
+        }
+}
+    </tbody>
+</table>

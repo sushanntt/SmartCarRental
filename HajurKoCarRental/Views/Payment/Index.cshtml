@@ -1,0 +1,67 @@
+@using Microsoft.AspNetCore.Identity
+@using HajurKoCarRental.Areas.Identity.Data
+@using static HajurKoCarRental.Controllers.PaymentController
+@model PaymentViewModel
+
+@{
+    ViewData["Title"] = "Payments";
+}
+
+<h1>Payment History</h1>
+<br/><br/>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                User ID 
+            </th>
+            <th>
+                User Name
+            </th>
+            <th>
+                Car ID
+            </th>
+            <th>
+                Car Photo
+            </th>
+            <th>
+                Car Brand Name
+            </th>
+            <th>
+                Car Model Name
+            </th>
+            <th>
+                Amount
+            </th>  
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Payment)
+        {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserId)
+            </td>
+            <td>
+                @item.User.Firstname @item.User.Lastname
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CarId)
+            </td>
+            <td>
+                <img src="@Url.Content("~/images/" + @item.Car.PhotoUrl)" alt="Image" width="100" height="100" />
+            </td>
+            <td>
+                @item.Car.CarBrand.BrandName 
+            </td>
+            <td>
+                @(item.Car.ModelName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Amount)
+            </td>
+            
+        </tr>
+}
+    </tbody>
+</table>

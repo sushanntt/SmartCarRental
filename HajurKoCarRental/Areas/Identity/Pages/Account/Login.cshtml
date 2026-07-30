@@ -1,0 +1,199 @@
+@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Log in";
+    <style>
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: #f5f7fa;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 440px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.06);
+            padding: 40px 44px;
+        }
+        .login-card .form-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0A4D3B;
+            margin: 0 0 4px;
+            text-align: center;
+        }
+        .login-card .form-subtitle {
+            color: #6b7a8f;
+            font-size: 0.9rem;
+            margin: 0 0 30px;
+            text-align: center;
+        }
+        .login-card .inp-box {
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .login-card .inp-box label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: #0A4D3B;
+            margin-bottom: 6px;
+        }
+        .login-card .inp-box input {
+            height: 48px;
+            width: 100%;
+            outline: none;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            padding: 0 16px;
+            border: 1.5px solid #e2e8f0;
+            transition: all 0.3s ease;
+            color: #0A4D3B;
+        }
+        .login-card .inp-box input:focus {
+            border-color: #0A4D3B;
+            box-shadow: 0 0 0 3px rgba(64,112,244,0.1);
+        }
+        .login-card .inp-box input::placeholder { color: #a0aec0; font-size: 0.85rem; }
+        .login-card .inp-box .text-danger { font-size: 0.78rem; margin-top: 4px; display: block; }
+        .login-card .btn-submit {
+            width: 100%;
+            height: 50px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0A4D3B, #063627);
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .login-card .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(64,112,244,0.35);
+        }
+        .login-card .auth-link {
+            display: block;
+            text-align: center;
+            color: #6b7a8f;
+            font-size: 0.88rem;
+            margin: 18px 0 0;
+        }
+        .login-card .auth-link a {
+            color: #0A4D3B;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .login-card .auth-link a:hover { text-decoration: underline; }
+        .login-card .forgot-link {
+            display: block;
+            text-align: right;
+            margin: -14px 0 18px;
+        }
+        .login-card .forgot-link a {
+            color: #6b7a8f;
+            font-size: 0.82rem;
+            text-decoration: none;
+        }
+        .login-card .forgot-link a:hover { color: #0A4D3B; text-decoration: underline; }
+        .login-card .divider {
+            text-align: center;
+            margin: 18px 0 14px;
+            position: relative;
+        }
+        .login-card .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+        .login-card .divider span {
+            background: #fff;
+            padding: 0 14px;
+            font-size: 0.85rem;
+            color: #6b7a8f;
+            position: relative;
+        }
+        .login-card .ext-btn {
+            width: 100%;
+            height: 48px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            background: #fff;
+            color: #333;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .login-card .ext-btn:hover {
+            border-color: #0A4D3B;
+        }
+
+        @@media (max-width: 480px) {
+            .login-card { padding: 28px 24px; }
+        }
+    </style>
+}
+
+<div class="login-page">
+    <div class="login-card">
+        <div class="form-title"><i class="fa fa-lock mr-2" style="color:#0A4D3B;"></i>Welcome Back</div>
+        <div class="form-subtitle">Sign in to your account to continue</div>
+        <form id="account" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="inp-box">
+                <label asp-for="Input.Email"></label>
+                <input asp-for="Input.Email" placeholder="your@email.com" autocomplete="username" aria-required="true" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="inp-box">
+                <label asp-for="Input.Password"></label>
+                <input asp-for="Input.Password" placeholder="Enter password" autocomplete="current-password" minlength="6" aria-required="true" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="forgot-link">
+                <a id="forgot-password" asp-page="./ForgotPassword">Forgot password?</a>
+            </div>
+            <button id="login-submit" type="submit" class="btn-submit">
+                <i class="fa fa-sign-in-alt"></i> Sign In
+            </button>
+        </form>
+        <div class="auth-link">
+            Don't have an account? <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create one</a>
+        </div>
+        @if (Model.ExternalLogins?.Count > 0)
+        {
+            <div class="divider"><span>or sign in with</span></div>
+            <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" style="margin-bottom:0;">
+                @foreach (var provider in Model.ExternalLogins)
+                {
+                    <button type="submit" class="ext-btn" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account" style="margin-bottom:8px;">
+                        <svg viewBox="0 0 48 48" style="width:18px;height:18px;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.54 28.59A14.5 14.5 0 0 1 9.5 24c0-1.59.28-3.14.76-4.59l-7.98-6.19A23.99 23.99 0 0 0 0 24c0 3.97.97 7.72 2.68 11.03l7.86-6.44z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+                        @provider.DisplayName
+                    </button>
+                }
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

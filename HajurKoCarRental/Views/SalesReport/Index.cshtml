@@ -1,0 +1,136 @@
+@model IEnumerable<HajurKoCarRental.Models.RentalHistory>
+
+@{
+    ViewData["Title"] = "Sales Report";
+    <style>
+                .badge {
+                    display: inline-block;
+                    padding: 0.25em 0.5em;
+                    font-size: 0.9em;
+                    font-weight: bold;
+                    line-height: 1;
+                    text-align: center;
+                    white-space: nowrap;
+                    vertical-align: baseline;
+                    border-radius: 0.25rem;
+                    background-color: green;
+                    color: white;
+                }
+
+                .badge-pending {
+                    background-color: red;
+                }
+    </style>
+}
+
+<h1>Sales Report</h1>
+<div class="mb-3">
+    <a asp-action="ExportExcel" asp-controller="SalesReport" class="btn btn-success btn-sm"><i class="fa fa-file-excel"></i> Export Excel</a>
+    <a asp-action="ExportPdf" asp-controller="SalesReport" class="btn btn-danger btn-sm"><i class="fa fa-file-pdf"></i> Export PDF</a>
+</div>
+<div class="btn-group" role="group">
+    <div>
+        <a asp-action="FilterData" asp-controller="SalesReport" asp-route-searchText="Ascending" class="btn btn-primary">Sort Asc</a> |
+        <a asp-action="FilterData" asp-controller="SalesReport" asp-route-searchText="Descending" class="btn btn-danger">Sort Des</a> |
+    </div>
+    <div style="margin-left: 20px">
+        <label for="startDate">Start Date: </label>
+        <input type="date" name="startDate" id="startDate" />
+
+        <label for="endDate">End Date: </label>
+        <input type="date" name="endDate" id="endDate" />
+        <button onclick="redirect()" class="btn btn-warning">Filter</button>
+    </div>
+</div>
+<br />
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                User Email
+            </th>
+            <th>
+                Name
+            </th>
+            <th>
+                Rented Date
+            </th>
+            <th>
+                Car Model
+            </th>
+            <th>
+                Car Photo
+            </th>
+            <th>
+                Car Number
+            </th>
+            <th>
+                Amount
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AuthorizedBy)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.User.Email)
+                </td>
+                <td>
+                    @item.User.Firstname @item.User.Lastname
+                </td>
+                <td>
+                    @item.RentedDate
+                </td>
+                <td>
+                    @item.Car.ModelName
+                </td>
+                <td>
+                    <img src="@Url.Content("~/images/" + item.Car.PhotoUrl)" alt="Image" width="100" height="100" />
+                </td>
+                <td>
+                    @item.Car.CarNumber
+                </td>
+                <td>
+                    NPR @item.Amount.ToString("N0")
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.AuthorizedBy)
+                </td>
+                <td>
+                    @if (item.Status == true)
+                    {
+                        <span class="badge">Approved</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-pending">Rejected/Cancelled</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+@section Scripts {
+
+    <script>
+        function redirect() {
+            const startDate = document.getElementById("startDate").value;
+            const endDate = document.getElementById("endDate").value;
+            if (startDate != null && endDate != null) {
+                window.location.href = "@Url.Action("FilterDate", "SalesReport")" + "?startDate=" + startDate + "&endDate=" + endDate;
+            } else {
+                alert("Please select start and end date");
+            }
+
+        }
+    </script>
+}

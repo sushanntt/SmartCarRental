@@ -1,0 +1,100 @@
+@using HajurKoCarRental.Areas.Identity.Data
+@using Microsoft.AspNetCore.Identity
+@model HajurKoCarRental.Models.CarDamage
+@inject SignInManager<HajurKoCarRentalUser> SignInManager
+
+@{
+    ViewData["Title"] = "Damage Request Form";
+    <style>
+    .wrapper{
+        max-width: 925px;
+        width: 100%;
+        background: #eff5f5;
+        margin: 20px auto;
+        box-shadow: 1px 1px 2px rgba(0,0,0,0.125);
+        padding: 30px;
+    }
+    .card-title{
+        text-align:center;
+    }
+    .form-group{
+          margin-left:30px;
+          margin-right:30px;
+          margin-top:10px;      
+    }
+
+    </style>
+}
+
+<h1>Damage Request Form</h1>
+
+<section class="content">
+    <div class="wrapper">
+        <div class="inputfield">
+            <div class="col-md-12">
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">Report Damage</h3>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <form asp-action="Create" method="post" asp-route-carId="@ViewBag.Car.Id" enctype="multipart/form-data">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                                <div class="form-group">
+                                    <label asp-for="CarId" class="control-label"></label>
+                                    <input asp-for="CarId" value="@ViewBag.Car.Id" class="form-control" disabled />
+                                    <span asp-validation-for="CarId" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label asp-for="DamageDescription" class="control-label"></label>
+                                    <textarea asp-for="DamageDescription" class="form-control" placeholder="Enter description of damage"></textarea>
+                                    <span asp-validation-for="DamageDescription" class="text-danger"></span>
+                                </div>
+
+                                <div class="col-md-12 btn-group pb-2">
+                                    <div class="form-group col-4 p-0">
+                                        <label asp-for="Photo" class="control-label"></label>
+                                        <img id="PreviewPhoto" src="~/images/no-photos.png" alt="Logo Image"
+                                                          width="125" height="125" />
+                                    </div>
+                                    <div class="col-1 p-0">
+                                    </div>
+                                    <div class="form-group col-6 p-0" style="margin-left:-10rem;">
+                                        <div class="input-group custom-file-button mt-5 pt-5">
+                                            <input asp-for="Photo" class="form-control custom-file-input" id="customFile">
+                                            <label class="input-group-text" for="customFile">Browse</label>
+                                        </div>
+                                        <span asp-validation-for="PhotoUrl" class="text-danger"></span>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="form-group">
+                                        <button type="submit" onclick="submitRequest()" class="btn btn-primary">Submit</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script type="text/javascript">
+        $(".custom-file-input").on("change", function () {
+
+            var fileName = $(this).val().split("\\").pop();
+
+            document.getElementById('PreviewPhoto').src = window.URL.createObjectURL(this.files[0]);
+
+            document.getElementById('PhotoUrl').value = fileName;
+
+        });
+    </script>
+}

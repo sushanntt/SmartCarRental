@@ -1,0 +1,138 @@
+@using HajurKoCarRental.Controllers
+@using System.Globalization
+@{
+    ViewData["Title"] = "Conversations";
+    var users = ViewBag.Users as IEnumerable<dynamic> ?? new List<dynamic>();
+    var lastMessages = ViewBag.LastMessages as Dictionary<string, LastMessageInfo> ?? new();
+    var unreadCounts = ViewBag.UnreadCounts as Dictionary<string, int> ?? new();
+
+    string TimeAgo(DateTime utc)
+    {
+        var local = utc.ToLocalTime();
+        var diff = DateTime.Now - local;
+        if (diff.TotalMinutes < 1) return "Just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return local.ToString("MMM dd");
+    }
+}
+
+<style>
+    .conv-wrapper { max-width: 750px; margin: 0 auto; }
+    .conv-card {
+        display: flex; align-items: center; padding: 16px 20px; text-decoration: none; color: inherit;
+        border-bottom: 1px solid #e9ecef; transition: all 0.15s ease; position: relative;
+    }
+    .conv-card:first-child { border-top-left-radius: 10px; border-top-right-radius: 10px; }
+    .conv-card:last-child { border-bottom: none; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+    .conv-card:hover { background: #E8F5E9; }
+    .conv-card.unread { background: #E8F5E9; }
+    .conv-card.unread .conv-name-text { font-weight: 600; }
+    .conv-card.unread .conv-preview { font-weight: 500; color: #333; }
+
+    .conv-sno {
+        width: 32px; font-size: 13px; color: #adb5bd; font-weight: 500; text-align: center;
+        flex-shrink: 0; margin-right: 12px;
+    }
+
+    .conv-avatar-wrap {
+        position: relative; width: 52px; height: 52px; flex-shrink: 0; margin-right: 14px;
+    }
+    .conv-avatar {
+        width: 52px; height: 52px; border-radius: 50%; object-fit: cover; background: #e9ecef;
+        display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; color: #495057;
+    }
+    .conv-avatar-badge {
+        position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px;
+        background: #dc3545; color: #fff; font-size: 11px; font-weight: 700;
+        border-radius: 20px; padding: 0 6px; display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 2px 5px rgba(220,53,69,0.3); border: 2px solid #fff;
+    }
+
+    .conv-body { flex: 1; min-width: 0; }
+    .conv-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .conv-name-text { font-size: 15px; color: #212529; }
+    .conv-time { font-size: 12px; color: #adb5bd; white-space: nowrap; margin-left: 10px; }
+    .conv-preview {
+        font-size: 13px; color: #6c757d; white-space: nowrap; overflow: hidden;
+        text-overflow: ellipsis; max-width: 400px;
+    }
+    .conv-preview .you-label { color: #0A4D3B; font-weight: 500; }
+
+    .conv-header {
+        padding: 18px 20px; border-bottom: 2px solid #e9ecef; margin-bottom: 0;
+        display: flex; align-items: center; justify-content: space-between;
+    }
+    .conv-header h4 { margin: 0; font-size: 18px; font-weight: 600; }
+    .conv-count { font-size: 13px; color: #6c757d; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #adb5bd; }
+    .empty-state i { font-size: 48px; margin-bottom: 16px; display: block; }
+</style>
+
+<div class="container mt-4">
+    <div class="conv-wrapper">
+        <div class="conv-header">
+            <h4><i class="fas fa-comments me-2"></i>Conversations</h4>
+            <span class="conv-count">@users.Count() total</span>
+        </div>
+
+        @if (!users.Any())
+        {
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>No conversations yet.</p>
+            </div>
+        }
+        else
+        {
+            var index = 1;
+            foreach (var user in users)
+            {
+                var unread = unreadCounts.ContainsKey(user.Id) ? unreadCounts[user.Id] : 0;
+                var hasLast = lastMessages.ContainsKey(user.Id);
+                var last = hasLast ? lastMessages[user.Id] : default;
+                <a class="conv-card @(unread > 0 ? "unread" : "")" href="@Url.Action("Conversation", new { userId = user.Id })">
+                    <div class="conv-sno">@(index++)</div>
+                    <div class="conv-avatar-wrap">
+                        <div class="conv-avatar">
+                            @if (!string.IsNullOrEmpty(user.ProfilePhotoUrl))
+                            {
+                                <img src="~/images/@user.ProfilePhotoUrl" class="conv-avatar" alt="" />
+                            }
+                            else
+                            {
+                                <span>@(user.Name?.FirstOrDefault() ?? '?')</span>
+                            }
+                        </div>
+                        @if (unread > 0)
+                        {
+                            <span class="conv-avatar-badge">@unread</span>
+                        }
+                    </div>
+                    <div class="conv-body">
+                        <div class="conv-top">
+                            <span class="conv-name-text">@user.Name</span>
+                            @if (hasLast)
+                            {
+                                <span class="conv-time">@TimeAgo(last.SentAt)</span>
+                            }
+                        </div>
+                        <div class="conv-preview">
+                            @if (hasLast)
+                            {
+                                if (last.SentByMe) { <span class="you-label">You: </span> }
+                                @last.Message
+                            }
+                            else
+                            {
+                                <span style="color:#adb5bd;font-style:italic;">No messages yet</span>
+                            }
+                        </div>
+                    </div>
+                </a>
+            }
+        }
+    </div>
+</div>

@@ -1,0 +1,167 @@
+@using HajurKoCarRental.Areas.Identity.Data
+@model HajurKoCarRentalUser
+
+@{
+    ViewData["Title"] = "Profile Completion";
+}
+<div class="alert alert-danger mb-0" role="alert" style="background-color: #f44336; color: white;">
+    Your profile is not complete. Please complete your profile to rent the selected car.
+</div>
+<div class="container-fluid my-4 shadow p-4" style="background-color: #cccccc">
+    <h1 class="text-center">Complete your Profile</h1>
+    <div class="row justify-content-center">
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-md-6 offset-md-3">
+                    <form asp-action="UpdateUser" asp-route-userId="@Model.Id" class="p-4" style="background-color: #d9d9d9" method="post" enctype="multipart/form-data">
+                        <input type="hidden" asp-for="Id" />
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label asp-for="Firstname" class="control-label"></label>
+                                    <input asp-for="Firstname" required class="form-control" />
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label asp-for="Lastname" class="control-label"></label>
+                                    <input asp-for="Lastname" required class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label asp-for="Address" class="control-label"></label>
+                                    <input asp-for="Address" required class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label asp-for="PhoneNumber" class="control-label"></label>
+                                    <input asp-for="PhoneNumber" required class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 btn-group pb-2">
+                                <div class="form-group col-4 p-0">
+                                    @if (Model.ProfilePhotoUrl != null)
+                                    {
+                                        <img id="ProfilePicPreview" src="~/images/@Model.ProfilePhotoUrl" alt="Logo Image"
+                                         width="125" height="125" />
+                                    }
+                                    else
+                                    {
+                                        <img id="ProfilePicPreview" src="~/images/no-photos.png" alt="Logo Image"
+                                         width="125" height="125" />
+                                    }
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label asp-for="ProfilePhoto" class="control-label"></label>
+                                        <input asp-for="ProfilePhoto" class="form-control-file profile_pic_input" id="profile_pic" required>
+                                        <span asp-validation-for="ProfilePhotoUrl" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 btn-group pb-2">
+                                <div class="form-group col-4 p-0">
+                                    @if (Model.CitizenshipPhotoUrl != null)
+                                    {
+                                        <img id="CitizenshipPreview" src="~/images/@Model.CitizenshipPhotoUrl" alt="Logo Image"
+                                         width="125" height="125" />
+                                    }
+                                    else
+                                    {
+                                        <img id="CitizenshipPreview" src="~/images/no-photos.png" alt="Logo Image"
+                                         width="125" height="125" />
+                                    }
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label asp-for="CitizenshipPhoto" class="control-label"></label>
+                                        <input asp-for="CitizenshipPhoto" class="form-control-file citizenship_pic_input" id="citizenship_pic" required>
+                                        <span asp-validation-for="CitizenshipPhotoUrl" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12 btn-group pb-2">
+                                <div class="form-group col-4 p-0">
+                                    @if (Model.LicencePhotoUrl != null)
+                                    {
+                                        <img id="LicencePreview" src="~/images/@Model.LicencePhotoUrl" alt="Logo Image"
+                                         width="125" height="125" />
+                                    }
+                                    else
+                                    {
+                                        <img id="LicencePreview" src="~/images/no-photos.png" alt="Logo Image"
+                                         width="125" height="125" />
+                                    }
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label asp-for="LicencePhoto" class="control-label"></label>
+                                        <input asp-for="LicencePhoto" class="form-control-file licence_pic_input" id="licence_pic" required>
+                                        <span asp-validation-for="LicencePhotoUrl" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                            <button type="reset" class="btn btn-secondary">Reset</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script type="text/javascript">
+        $(".profile_pic_input").on("change", function () {
+
+            var fileName = $(this).val().split("\\").pop();
+
+            document.getElementById('ProfilePicPreview').src = window.URL.createObjectURL(this.files[0]);
+
+            document.getElementById('ProfilePhotoUrl').value = fileName;
+
+        });
+
+        $(".citizenship_pic_input").on("change", function () {
+
+            var fileName = $(this).val().split("\\").pop();
+
+            document.getElementById('CitizenshipPreview').src = window.URL.createObjectURL(this.files[0]);
+
+            document.getElementById('CitizenshipPhotoUrl').value = fileName;
+
+        });
+
+        $(".licence_pic_input").on("change", function () {
+
+            var fileName = $(this).val().split("\\").pop();
+
+            document.getElementById('LicencePreview').src = window.URL.createObjectURL(this.files[0]);
+
+            document.getElementById('LicencePhotoUrl').value = fileName;
+
+        });
+    </script>
+}

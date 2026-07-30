@@ -1,0 +1,30 @@
+@model HajurKoCarRental.Models.CarBrand
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details of Car Brand</h1>
+
+
+<div>
+    <hr />
+    <dl class="row">
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.BrandName)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.BrandName)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.PhotoUrl)
+        </dt>
+        <dd class="col-sm-10">
+            <img src="@Url.Content("~/images/" + @Model.PhotoUrl)" alt="Image" style="width: 10%" />
+        </dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.Id" class="btn btn-outline-primary">Edit</a> |
+    <a asp-action="Index" class="btn btn-outline-danger">Back to List</a>
+</div>

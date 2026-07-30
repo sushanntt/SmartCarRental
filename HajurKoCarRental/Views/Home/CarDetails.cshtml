@@ -1,0 +1,322 @@
+@{
+    ViewData["Title"] = "Car Details";
+    var festivalMultiplier = ViewBag.FestivalMultiplier ?? 1.0m;
+    var hasFestival = festivalMultiplier > 1.0m;
+}
+@model Car
+
+<style>
+    .detail-hero {
+        background: linear-gradient(135deg, #0A4D3B 0%, #2D8A6E 100%);
+        padding: 32px 0 28px;
+    }
+    .detail-hero h1 { color: #fff; font-weight: 700; font-size: 1.6rem; margin: 0; }
+    .detail-hero p { color: rgba(255,255,255,0.65); margin: 4px 0 0; font-size: 0.9rem; }
+
+    .detail-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 4px 30px rgba(0,0,0,0.06);
+        overflow: hidden;
+    }
+    .detail-card .img-section {
+        position: relative;
+        overflow: hidden;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8faff;
+    }
+    .detail-card .img-section img {
+        max-width: 100%;
+        max-height: 420px;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+    }
+    .detail-card .img-section .avail-badge-detail {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        padding: 6px 18px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        z-index: 2;
+    }
+    .detail-card .img-section .avail-badge-detail.available {
+        background: linear-gradient(135deg, #1cc88a, #13855c);
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(28,200,138,0.3);
+    }
+    .detail-card .img-section .avail-badge-detail.unavailable {
+        background: linear-gradient(135deg, #e74a3b, #be2617);
+        color: #fff;
+    }
+    .detail-card .img-section .festival-badge-detail {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: linear-gradient(135deg, #ff6b35, #f7931e);
+        color: #fff;
+        padding: 6px 18px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        box-shadow: 0 4px 15px rgba(255,107,53,0.3);
+        z-index: 2;
+    }
+    .detail-card .img-section .brand-badge-detail {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        background: #fff;
+        padding: 5px;
+        object-fit: contain;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        z-index: 2;
+    }
+    .detail-card .img-section .color-select-overlay { display: none; }
+    .detail-card .img-section .color-select-overlay select { display: none; }
+
+    .detail-card .info-section {
+        padding: 32px;
+    }
+    .detail-card .info-section .car-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #0A4D3B;
+        margin: 0 0 4px;
+    }
+    .detail-card .info-section .car-title small { font-weight: 400; color: #6b7a8f; font-size: 1rem; }
+    .detail-card .info-section .car-number {
+        color: #6b7a8f;
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+    }
+
+    .spec-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .spec-grid .spec-item {
+        background: #f8faff;
+        border-radius: 12px;
+        padding: 14px;
+        text-align: center;
+    }
+    .spec-grid .spec-item i { font-size: 1.2rem; color: #0A4D3B; margin-bottom: 4px; }
+    .spec-grid .spec-item .spec-val { font-weight: 700; color: #0A4D3B; font-size: 0.95rem; }
+    .spec-grid .spec-item .spec-lbl { font-size: 0.75rem; color: #6b7a8f; }
+
+    .price-section {
+        background: linear-gradient(135deg, #E8F5E9, #E8F5E9);
+        border-radius: 14px;
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .price-section .price-left {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+    .price-section .price-left .current-price {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #0A4D3B;
+    }
+    .price-section .price-left .current-price small { font-size: 0.85rem; font-weight: 400; color: #6b7a8f; }
+    .price-section .price-left .old-price {
+        text-decoration: line-through;
+        color: #bbb;
+        font-size: 1rem;
+    }
+    .price-section .price-left .festival-label {
+        font-size: 0.8rem;
+        color: #ff6b35;
+        font-weight: 600;
+    }
+    .price-section .status-badge {
+        padding: 6px 18px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+    .price-section .status-badge.avail { background: #d4edda; color: #155724; }
+    .price-section .status-badge.unavail { background: #f8d7da; color: #721c24; }
+
+    .desc-section {
+        background: #fafbff;
+        border-radius: 14px;
+        padding: 18px 22px;
+    }
+    .desc-section h5 { font-weight: 700; color: #0A4D3B; font-size: 0.95rem; margin: 0 0 8px; }
+    .desc-section p { color: #555; font-size: 0.9rem; line-height: 1.7; margin: 0; }
+
+    .detail-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+    }
+    .detail-actions .btn-rent-detail {
+        flex: 1;
+        background: linear-gradient(135deg, #0A4D3B, #063627);
+        color: #fff;
+        border: none;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .detail-actions .btn-rent-detail:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(64,112,244,0.3); color: #fff; }
+    .detail-actions .btn-back-detail {
+        flex: 1;
+        background: #E8F5E9;
+        color: #0A4D3B;
+        border: 2px solid transparent;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .detail-actions .btn-back-detail:hover { background: #e4ebff; color: #063627; }
+</style>
+
+@{
+    var displayPrice = hasFestival ? (int)Math.Round(Model.Price * (double)festivalMultiplier) : Model.Price;
+    var isAvailable = Model.IsCarBooked == false || Model.IsCarBooked == null;
+}
+
+<div class="detail-hero">
+    <div class="container">
+        <a asp-controller="Home" asp-action="CarList" style="color:rgba(255,255,255,0.6);font-size:0.85rem;text-decoration:none;display:inline-block;margin-bottom:8px;"><i class="fa fa-arrow-left mr-1"></i> Back to Cars</a>
+        <h1><i class="fa fa-info-circle mr-2"></i>Car Details</h1>
+        <p>@Model.CarBrand?.BrandName — @Model.ModelName</p>
+    </div>
+</div>
+
+<div class="container" style="margin-top: -20px; padding-bottom: 40px;">
+    <div class="detail-card">
+        <div class="row no-gutters">
+            <div class="col-md-6">
+                <div class="img-section">
+                    @if (isAvailable)
+                    {
+                        <span class="avail-badge-detail available"><i class="fa fa-check-circle"></i> Available (@Model.AvailableCarCount)</span>
+                    }
+                    else
+                    {
+                        <span class="avail-badge-detail unavailable"><i class="fa fa-times-circle"></i> Unavailable</span>
+                    }
+                    @if (hasFestival)
+                    {
+                        <span class="festival-badge-detail"><i class="fa fa-fire"></i> Festival Price</span>
+                    }
+                    @if (Model.CarBrand != null)
+                    {
+                        <img src="~/images/@Model.CarBrand.PhotoUrl" alt="Brand" class="brand-badge-detail" />
+                    }
+                    <img id="carImage" src="~/images/@Model.PhotoUrl" alt="@Model.ModelName" style="padding:20px;" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-section">
+                    <h2 class="car-title">@Model.ModelName <small>- @Model.CarBrand?.BrandName</small></h2>
+                    @if (!string.IsNullOrWhiteSpace(Model.CarNumber))
+                    {
+                        <p class="car-number"><i class="fa fa-id-card"></i> Plate: @Model.CarNumber</p>
+                    }
+
+                    <div class="spec-grid">
+                        <div class="spec-item">
+                            <i class="fa fa-car"></i>
+                            <div class="spec-val">@Model.EngineType</div>
+                            <div class="spec-lbl">Engine</div>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa fa-user"></i>
+                            <div class="spec-val">@Model.TotalSeats</div>
+                            <div class="spec-lbl">Seats</div>
+                        </div>
+                        <div class="spec-item">
+                            <i class="fa fa-calendar"></i>
+                            <div class="spec-val">@Model.ModelYear</div>
+                            <div class="spec-lbl">Year</div>
+                        </div>
+                    </div>
+
+                    <div class="price-section">
+                        <div class="price-left">
+                            @if (hasFestival)
+                            {
+                                <span class="old-price">Rs. @Model.Price</span>
+                                <span class="current-price" style="color:#ff6b35;">Rs. @displayPrice <small>/ Day</small></span>
+                                <span class="festival-label"><i class="fa fa-fire"></i> @ViewBag.ActiveFestivalName</span>
+                            }
+                            else
+                            {
+                                <span class="current-price">Rs. @Model.Price <small>/ Day</small></span>
+                            }
+                        </div>
+                        @if (isAvailable)
+                        {
+                            <span class="status-badge avail"><i class="fa fa-check-circle"></i> Available</span>
+                        }
+                        else
+                        {
+                            <span class="status-badge unavail"><i class="fa fa-times-circle"></i> Unavailable</span>
+                        }
+                    </div>
+
+                    @if (Model.CarBranches != null && Model.CarBranches.Any())
+                    {
+                        <div class="desc-section mb-3">
+                            <h5><i class="fa fa-building mr-1"></i> Available at Branches</h5>
+                            @foreach (var cb in Model.CarBranches)
+                            {
+                                <span class="badge" style="background:#E8F5E9;color:#0A4D3B;padding:6px 14px;margin:2px;font-weight:600;">
+                                    @(cb.Branch?.Name ?? "Unknown") (@cb.AvailableCount)
+                                </span>
+                            }
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(Model.CarDescription))
+                    {
+                        <div class="desc-section">
+                            <h5><i class="fa fa-align-left mr-1"></i> Description</h5>
+                            <p>@Model.CarDescription</p>
+                        </div>
+                    }
+
+                    <div class="detail-actions">
+                        @if (isAvailable)
+                        {
+                            <a id="rentNowBtn" asp-controller="Home" asp-action="BeforeKhalti" asp-route-carId="@Model.Id" class="btn-rent-detail"><i class="fa fa-shopping-cart"></i> Rent Now</a>
+                        }
+                        <a asp-controller="Home" asp-action="CarList" class="btn-back-detail"><i class="fa fa-arrow-left"></i> Back to Cars</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+}

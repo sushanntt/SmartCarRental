@@ -1,0 +1,123 @@
+@model IEnumerable<HajurKoCarRental.Models.Rent>
+
+@{
+    ViewData["Title"] = "Return Car";
+    <style>
+    .badge {
+        display: inline-block;
+        padding: 0.25em 0.5em;
+        font-size: 0.9em;
+        font-weight: bold;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+        background-color: green;
+        color: white;
+    }
+    .badge-pending{
+            background-color: red;
+    }
+    </style>
+}
+
+
+<div class="card">
+    <div class="card-header">
+        <h2>Return Car</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Car Model</th>
+                        <th>Car Number</th>
+                        <th>Car Photo</th>
+                        <th>User</th>
+                        <th>Phone No.</th>
+                        <th>Payment Method</th>
+                        <th>Total Amount</th>
+                        <th>Advance Payment</th>
+                        <th>Pay at Return</th>
+                        <th>Verified Status</th>
+                        <th>Rented Date</th>
+                        <th>Operations</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any(m => m.Verified == true))
+                    {
+                        <tr>
+                            <td colspan="12" class="text-center py-4">
+                                <i class="fa fa-undo fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No cars pending return.</p>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            if (@item.Verified == true)
+                            {
+                                <tr>
+                                    <td>@item.Car.ModelName</td>
+                                    <td>@item.Car.CarNumber</td>
+                                    <td>
+                                        <img src="@Url.Content("~/images/" + item.Car.PhotoUrl)" alt="Image" width="100" height="100" />
+                                    </td>
+                                    <td>@item.User.UserName</td>
+                                    <td>@item.User.PhoneNumber</td>
+                                <td>@item.PaymentMethod</td>
+                                <td>Rs. @item.Amount</td>
+                                <td>Rs. @item.AdvancePaid</td>
+                                <td>
+                                    @if (item.RemainingAmount > 0)
+                                    {
+                                        <span style="color:#e74a3b;font-weight:600;">Rs. @item.RemainingAmount</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#1cc88a;">Paid</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Verified)
+                                    {
+                                        <span class="badge">Verified</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-pending">Pending</span>
+                                    }
+                                </td>
+                                <td>@item.RentalDate</td>
+
+                                <td>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        @if (item.RemainingAmount > 0)
+                                        {
+                                            <form asp-action="MarkRemainingPaid" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-warning mb-1" onclick="return confirm('Mark balance of Rs. @item.RemainingAmount as paid at return?')">Mark as Paid at Return</button>
+                                            </form>
+                                            <span class="btn btn-sm btn-secondary mb-1 disabled" title="Mark as paid at return first">Return</span>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn btn-primary" asp-action="Return" asp-route-id="@item.Id">Return</a>
+                                        }
+                                    }
+                                </td>
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
