@@ -365,3 +365,12 @@ FodyWeavers.xsd
 # App settings
 HajurKoCarRental/appsettings.json
 HajurKoCarRental/appsettings.Development.json
+
+# Claude AI
+.claude/
+
+# Project docs
+PROJECT_ANALYSIS.txt
+PROJECT_OVERVIEW.md
+SYSTEM_DIAGRAMS.md
+GOOGLE_LOGIN_SETUP.md
